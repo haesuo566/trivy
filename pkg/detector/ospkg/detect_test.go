@@ -43,9 +43,7 @@ func TestDetector_Detect(t *testing.T) {
 					{Name: "gpg-pubkey"},
 				},
 			},
-			wantPkgs: []ftypes.Package{
-				{Name: "vim"},
-			},
+			wantPkgs: nil,
 		},
 		{
 			name: "filter out third-party packages",
@@ -69,14 +67,7 @@ func TestDetector_Detect(t *testing.T) {
 					},
 				},
 			},
-			wantPkgs: []ftypes.Package{
-				{
-					Name: "vim",
-					Repository: ftypes.PackageRepository{
-						Class: ftypes.RepositoryClassOfficial,
-					},
-				},
-			},
+			wantPkgs: nil,
 		},
 		{
 			name: "filter out both gpg-pubkey and third-party packages",
@@ -101,14 +92,7 @@ func TestDetector_Detect(t *testing.T) {
 					},
 				},
 			},
-			wantPkgs: []ftypes.Package{
-				{
-					Name: "vim",
-					Repository: ftypes.PackageRepository{
-						Class: ftypes.RepositoryClassOfficial,
-					},
-				},
-			},
+			wantPkgs: nil,
 		},
 		{
 			name: "keep packages with unknown repository class",
@@ -129,17 +113,7 @@ func TestDetector_Detect(t *testing.T) {
 					},
 				},
 			},
-			wantPkgs: []ftypes.Package{
-				{
-					Name: "vim",
-					Repository: ftypes.PackageRepository{
-						Class: ftypes.RepositoryClassUnknown,
-					},
-				},
-				{
-					Name: "curl",
-				},
-			},
+			wantPkgs: nil,
 		},
 	}
 

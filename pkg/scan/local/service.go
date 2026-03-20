@@ -25,7 +25,6 @@ import (
 	"github.com/aquasecurity/trivy/pkg/scan/ospkg"
 	"github.com/aquasecurity/trivy/pkg/set"
 	"github.com/aquasecurity/trivy/pkg/types"
-	"github.com/aquasecurity/trivy/pkg/vulnerability"
 	xslices "github.com/aquasecurity/trivy/pkg/x/slices"
 
 	_ "github.com/aquasecurity/trivy/pkg/fanal/analyzer/all"
@@ -37,17 +36,14 @@ type Service struct {
 	applier        applier.Applier
 	osPkgScanner   ospkg.Scanner
 	langPkgScanner langpkg.Scanner
-	vulnClient     vulnerability.Client
 }
 
 // NewService is the factory method for scan service
-func NewService(a applier.Applier, osPkgScanner ospkg.Scanner, langPkgScanner langpkg.Scanner,
-	vulnClient vulnerability.Client) Service {
+func NewService(a applier.Applier, osPkgScanner ospkg.Scanner, langPkgScanner langpkg.Scanner) Service {
 	return Service{
 		applier:        a,
 		osPkgScanner:   osPkgScanner,
 		langPkgScanner: langPkgScanner,
-		vulnClient:     vulnClient,
 	}
 }
 
@@ -150,10 +146,6 @@ func (s Service) ScanTarget(ctx context.Context, target types.ScanTarget, option
 		})
 	}
 
-	for i := range results {
-		// Fill vulnerability details
-		s.vulnClient.FillInfo(results[i].Vulnerabilities, options.VulnSeveritySources)
-	}
 
 	// Call post-scan hooks
 	if results, err = extension.PostScan(ctx, results); err != nil {

@@ -2,7 +2,6 @@ package result
 
 import (
 	"context"
-	"fmt"
 	"os"
 	"path/filepath"
 	"slices"
@@ -10,12 +9,10 @@ import (
 
 	"github.com/open-policy-agent/opa/v1/ast"
 	"github.com/open-policy-agent/opa/v1/rego"
-	"github.com/samber/lo"
 	"golang.org/x/xerrors"
 
 	dbTypes "github.com/aquasecurity/trivy-db/pkg/types"
 	"github.com/aquasecurity/trivy/pkg/types"
-	"github.com/aquasecurity/trivy/pkg/vex"
 	xslices "github.com/aquasecurity/trivy/pkg/x/slices"
 )
 
@@ -26,13 +23,11 @@ const (
 
 type FilterOptions struct {
 	Severities         []dbTypes.Severity
-	IgnoreStatuses     []dbTypes.Status
 	IncludeNonFailures bool
 	IgnoreFile         string
 	PolicyFile         string
 	IgnoreLicenses     []string
 	CacheDir           string
-	VEXSources         []vex.Source
 }
 
 // Filter filters out the report
@@ -44,16 +39,8 @@ func Filter(ctx context.Context, report types.Report, opts FilterOptions) error 
 
 	for i := range report.Results {
 		if err = FilterResult(ctx, &report.Results[i], ignoreConf, opts); err != nil {
-			return xerrors.Errorf("unable to filter vulnerabilities: %w", err)
+			return xerrors.Errorf("unable to filter results: %w", err)
 		}
-	}
-
-	// Filter out vulnerabilities based on the given VEX document.
-	if err = vex.Filter(ctx, &report, vex.Options{
-		CacheDir: opts.CacheDir,
-		Sources:  opts.VEXSources,
-	}); err != nil {
-		return xerrors.Errorf("VEX error: %w", err)
 	}
 
 	return nil
@@ -64,7 +51,6 @@ func FilterResult(ctx context.Context, result *types.Result, ignoreConf IgnoreCo
 	// Convert dbTypes.Severity to string
 	severities := xslices.Map(opt.Severities, dbTypes.Severity.String)
 
-	filterVulnerabilities(result, severities, opt.IgnoreStatuses, ignoreConf)
 	filterMisconfigurations(result, severities, opt.IncludeNonFailures, ignoreConf)
 	filterSecrets(result, severities, ignoreConf)
 	filterLicenses(result, severities, opt.IgnoreLicenses, ignoreConf)
@@ -78,44 +64,6 @@ func FilterResult(ctx context.Context, result *types.Result, ignoreConf IgnoreCo
 	sort.Sort(types.BySeverity(result.Vulnerabilities))
 
 	return nil
-}
-
-func filterVulnerabilities(result *types.Result, severities []string, ignoreStatuses []dbTypes.Status, ignoreConfig IgnoreConfig) {
-	uniqVulns := make(map[string]types.DetectedVulnerability)
-	for _, vuln := range result.Vulnerabilities {
-		if vuln.Severity == "" {
-			vuln.Severity = dbTypes.SeverityUnknown.String()
-		}
-
-		switch {
-		// Filter by severity
-		case !slices.Contains(severities, vuln.Severity):
-			continue
-		// Filter by status
-		case slices.Contains(ignoreStatuses, vuln.Status):
-			continue
-		}
-
-		// Filter by ignore file
-		if f := ignoreConfig.MatchVulnerability(vuln.VulnerabilityID, result.Target, vuln.PkgPath, vuln.PkgIdentifier.PURL); f != nil {
-			result.ModifiedFindings = append(result.ModifiedFindings,
-				types.NewModifiedFinding(vuln, types.FindingStatusIgnored, f.Statement, ignoreConfig.FilePath))
-			continue
-		}
-
-		// Check if there is a duplicate vulnerability
-		key := fmt.Sprintf("%s/%s/%s/%s/%s", vuln.VulnerabilityID, vuln.PkgID, vuln.PkgName, vuln.InstalledVersion, vuln.PkgPath)
-		if old, ok := uniqVulns[key]; ok && !shouldOverwrite(old, vuln) {
-			continue
-		}
-		uniqVulns[key] = vuln
-	}
-
-	// Override the detected vulnerabilities
-	result.Vulnerabilities = lo.Values(uniqVulns)
-	if len(result.Vulnerabilities) == 0 {
-		result.Vulnerabilities = nil
-	}
 }
 
 func filterMisconfigurations(result *types.Result, severities []string, includeNonFailures bool,
@@ -328,7 +276,3 @@ func evaluate[T types.Finding](ctx context.Context, query rego.PreparedEvalQuery
 	return ignore, nil
 }
 
-func shouldOverwrite(oldVuln, newVuln types.DetectedVulnerability) bool {
-	// The same vulnerability must be picked always.
-	return oldVuln.FixedVersion < newVuln.FixedVersion
-}

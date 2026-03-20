@@ -5,12 +5,10 @@ import (
 	"time"
 
 	v1 "github.com/google/go-containerregistry/pkg/v1"
-	"github.com/package-url/packageurl-go"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/aquasecurity/trivy-db/pkg/db"
-	dbTypes "github.com/aquasecurity/trivy-db/pkg/types"
 	"github.com/aquasecurity/trivy/internal/dbtest"
 	"github.com/aquasecurity/trivy/internal/testutil"
 	"github.com/aquasecurity/trivy/pkg/cache"
@@ -26,7 +24,6 @@ import (
 	"github.com/aquasecurity/trivy/pkg/scan/ospkg"
 	tTypes "github.com/aquasecurity/trivy/pkg/types"
 	"github.com/aquasecurity/trivy/pkg/uuid"
-	"github.com/aquasecurity/trivy/pkg/vulnerability"
 )
 
 func TestScanner_ScanArtifact(t *testing.T) {
@@ -48,7 +45,6 @@ func TestScanner_ScanArtifact(t *testing.T) {
 					PkgTypes:            []string{"os"},
 					Scanners:            tTypes.Scanners{tTypes.VulnerabilityScanner},
 					PkgRelationships:    ftypes.Relationships,
-					VulnSeveritySources: []dbTypes.SourceID{"auto"},
 				},
 			},
 			imagePath: "../fanal/test/testdata/alpine-311.tar.gz",
@@ -121,98 +117,9 @@ func TestScanner_ScanArtifact(t *testing.T) {
 						Target: "../fanal/test/testdata/alpine-311.tar.gz (alpine 3.11.5)",
 						Class:  tTypes.ClassOSPkg,
 						Type:   "alpine",
-						Vulnerabilities: []tTypes.DetectedVulnerability{
-							{
-								VulnerabilityID:  "CVE-2020-9999",
-								PkgName:          "musl",
-								PkgID:            "musl@1.1.24-r2",
-								InstalledVersion: "1.1.24-r2",
-								FixedVersion:     "1.2.4",
-								Status:           dbTypes.StatusFixed,
-								Layer: ftypes.Layer{
-									DiffID: "sha256:beee9f30bc1f711043e78d4a2be0668955d4b761d587d6f60c2c8dc081efb203",
-								},
-								PrimaryURL:  "https://avd.aquasec.com/nvd/cve-2020-9999",
-								Fingerprint: "sha256:36d448cc18b4acd7ccc868fc1865f7dc97694d1e7e4fa55cfabec91990866926", // hash(sha256:574abdaf07824449b1277ec1e7e67659cc869bbf97fd95447812b55644350a21:../fanal/test/testdata/alpine-311.tar.gz (alpine 3.11.5):musl@1.1.24-r2:CVE-2020-9999)
-								PkgIdentifier: ftypes.PkgIdentifier{
-									UID: "4cdbcc57baa49752",
-									PURL: &packageurl.PackageURL{
-										Type:      "apk",
-										Namespace: "alpine",
-										Name:      "musl",
-										Version:   "1.1.24-r2",
-										Qualifiers: packageurl.Qualifiers{
-											{
-												Key:   "arch",
-												Value: "x86_64",
-											},
-											{
-												Key:   "distro",
-												Value: "3.11.5",
-											},
-										},
-									},
-								},
-								Vulnerability: dbTypes.Vulnerability{
-									Title:       "dos",
-									Description: "dos vulnerability",
-									Severity:    "HIGH",
-								},
-							},
-							{
-								VulnerabilityID:  "CVE-2020-9999",
-								PkgName:          "musl-utils",
-								PkgID:            "musl-utils@1.1.24-r2",
-								InstalledVersion: "1.1.24-r2",
-								FixedVersion:     "1.2.4",
-								Status:           dbTypes.StatusFixed,
-								Layer: ftypes.Layer{
-									DiffID: "sha256:beee9f30bc1f711043e78d4a2be0668955d4b761d587d6f60c2c8dc081efb203",
-								},
-								PrimaryURL:  "https://avd.aquasec.com/nvd/cve-2020-9999",
-								Fingerprint: "sha256:5b28a2608ccc60c031066a4809cdb5c4ed7eb331e1136b413883c562a7e7aa55", // hash(sha256:574abdaf07824449b1277ec1e7e67659cc869bbf97fd95447812b55644350a21:../fanal/test/testdata/alpine-311.tar.gz (alpine 3.11.5):musl-utils@1.1.24-r2:CVE-2020-9999)
-								PkgIdentifier: ftypes.PkgIdentifier{
-									UID: "9cb69455d0f6ae6a",
-									PURL: &packageurl.PackageURL{
-										Type:      "apk",
-										Namespace: "alpine",
-										Name:      "musl-utils",
-										Version:   "1.1.24-r2",
-										Qualifiers: packageurl.Qualifiers{
-											{
-												Key:   "arch",
-												Value: "x86_64",
-											},
-											{
-												Key:   "distro",
-												Value: "3.11.5",
-											},
-										},
-									},
-								},
-								Vulnerability: dbTypes.Vulnerability{
-									Title:       "dos",
-									Description: "dos vulnerability",
-									Severity:    "HIGH",
-								},
-							},
-						},
 					},
 				},
 			},
-		},
-		{
-			name: "sad path: broken database",
-			args: args{
-				options: tTypes.ScanOptions{
-					PkgTypes:         []string{"os"},
-					Scanners:         tTypes.Scanners{tTypes.VulnerabilityScanner},
-					PkgRelationships: ftypes.Relationships,
-				},
-			},
-			imagePath: "../fanal/test/testdata/alpine-311.tar.gz",
-			fixtures:  []string{"local/testdata/fixtures/sad.yaml"},
-			wantErr:   "failed to detect vulnerabilities",
 		},
 	}
 
@@ -236,7 +143,7 @@ func TestScanner_ScanArtifact(t *testing.T) {
 
 			// Create scanner
 			applier := applier.NewApplier(c)
-			scanner := local.NewService(applier, ospkg.NewScanner(), langpkg.NewScanner(), vulnerability.NewClient(db.Config{}))
+			scanner := local.NewService(applier, ospkg.NewScanner(), langpkg.NewScanner())
 			s := scan.NewService(scanner, artifact)
 
 			ctx := clock.With(t.Context(), time.Date(2021, 8, 25, 12, 20, 30, 5, time.UTC))

@@ -5,7 +5,6 @@ import (
 	"sync"
 
 	"github.com/google/go-containerregistry/pkg/name"
-	"github.com/samber/lo"
 	"golang.org/x/xerrors"
 
 	"github.com/aquasecurity/trivy/pkg/db"
@@ -15,8 +14,6 @@ import (
 	"github.com/aquasecurity/trivy/pkg/misconf"
 	"github.com/aquasecurity/trivy/pkg/policy"
 	"github.com/aquasecurity/trivy/pkg/types"
-	"github.com/aquasecurity/trivy/pkg/vex"
-	"github.com/aquasecurity/trivy/pkg/vex/repo"
 )
 
 var mu sync.Mutex
@@ -47,35 +44,6 @@ func DownloadDB(ctx context.Context, appVersion, cacheDir string, dbRepositories
 		return xerrors.Errorf("failed to show database info: %w", err)
 	}
 	return nil
-}
-
-func DownloadVEXRepositories(ctx context.Context, opts flag.Options) error {
-	ctx = log.WithContextPrefix(ctx, "vex")
-	if opts.SkipVEXRepoUpdate {
-		log.InfoContext(ctx, "Skipping VEX repository update")
-		return nil
-	}
-
-	mu.Lock()
-	defer mu.Unlock()
-
-	// Download VEX repositories only if `--vex repo` is passed.
-	_, enabled := lo.Find(opts.VEXSources, func(src vex.Source) bool {
-		return src.Type == vex.TypeRepository
-	})
-	if !enabled {
-		return nil
-	}
-
-	err := repo.NewManager(opts.CacheDir).DownloadRepositories(ctx, nil, repo.Options{
-		Insecure: opts.Insecure,
-	})
-	if err != nil {
-		return xerrors.Errorf("failed to download vex repositories: %w", err)
-	}
-
-	return nil
-
 }
 
 // InitBuiltinChecks downloads the built-in policies and loads them

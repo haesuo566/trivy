@@ -27,7 +27,6 @@ import (
 	"github.com/aquasecurity/trivy/pkg/types"
 	"github.com/aquasecurity/trivy/pkg/version"
 	"github.com/aquasecurity/trivy/pkg/version/app"
-	vexrepo "github.com/aquasecurity/trivy/pkg/vex/repo"
 	xstrings "github.com/aquasecurity/trivy/pkg/x/strings"
 )
 
@@ -98,7 +97,6 @@ func NewApp() *cobra.Command {
 		NewVMCommand(globalFlags),
 		NewCleanCommand(globalFlags),
 		NewRegistryCommand(globalFlags),
-		NewVEXCommand(globalFlags),
 	)
 
 	return rootCmd
@@ -225,7 +223,6 @@ func NewImageCommand(globalFlags *flag.GlobalFlagGroup) *cobra.Command {
 		reportFlagGroup,
 		flag.NewScanFlagGroup(),
 		flag.NewSecretFlagGroup(),
-		flag.NewVulnerabilityFlagGroup(),
 	}
 
 	cmd := &cobra.Command{
@@ -307,7 +304,6 @@ func NewFilesystemCommand(globalFlags *flag.GlobalFlagGroup) *cobra.Command {
 		reportFlagGroup,
 		flag.NewScanFlagGroup(),
 		flag.NewSecretFlagGroup(),
-		flag.NewVulnerabilityFlagGroup(),
 	}
 
 	cmd := &cobra.Command{
@@ -373,7 +369,6 @@ func NewRootfsCommand(globalFlags *flag.GlobalFlagGroup) *cobra.Command {
 		reportFlagGroup,
 		flag.NewScanFlagGroup(),
 		flag.NewSecretFlagGroup(),
-		flag.NewVulnerabilityFlagGroup(),
 	}
 
 	cmd := &cobra.Command{
@@ -437,7 +432,6 @@ func NewRepositoryCommand(globalFlags *flag.GlobalFlagGroup) *cobra.Command {
 		reportFlagGroup,
 		scanFlagGroup,
 		flag.NewSecretFlagGroup(),
-		flag.NewVulnerabilityFlagGroup(),
 		flag.NewRepoFlagGroup(),
 	}
 
@@ -550,7 +544,6 @@ func NewClientCommand(globalFlags *flag.GlobalFlagGroup) *cobra.Command {
 		remoteFlags,
 		flag.NewReportFlagGroup(),
 		flag.NewScanFlagGroup(),
-		flag.NewVulnerabilityFlagGroup(),
 	}
 
 	cmd := &cobra.Command{
@@ -833,7 +826,6 @@ func NewKubernetesCommand(globalFlags *flag.GlobalFlagGroup) *cobra.Command {
 		scanFlags,
 		flag.NewSecretFlagGroup(),
 		flag.NewRegistryFlagGroup(),
-		flag.NewVulnerabilityFlagGroup(),
 	}
 
 	cmd := &cobra.Command{
@@ -902,7 +894,6 @@ func NewVMCommand(globalFlags *flag.GlobalFlagGroup) *cobra.Command {
 		reportFlagGroup,
 		flag.NewScanFlagGroup(),
 		flag.NewSecretFlagGroup(),
-		flag.NewVulnerabilityFlagGroup(),
 		&flag.AWSFlagGroup{
 			Region: &flag.Flag[string]{
 				Name:       "aws-region",
@@ -992,7 +983,6 @@ func NewSBOMCommand(globalFlags *flag.GlobalFlagGroup) *cobra.Command {
 		flag.NewRegistryFlagGroup(), // for DBs in private registries
 		reportFlagGroup,
 		scanFlagGroup,
-		flag.NewVulnerabilityFlagGroup(),
 		licenseFlagGroup,
 	}
 
@@ -1130,94 +1120,6 @@ func NewRegistryCommand(globalFlags *flag.GlobalFlagGroup) *cobra.Command {
 
 	cmd.SetFlagErrorFunc(flagErrorFunc)
 
-	return cmd
-}
-
-func NewVEXCommand(globalFlags *flag.GlobalFlagGroup) *cobra.Command {
-	vexFlags := flag.Flags{
-		globalFlags,
-	}
-	var vexOptions flag.Options
-
-	cmd := &cobra.Command{
-		Use:           "vex subcommand",
-		GroupID:       groupManagement,
-		Short:         "[EXPERIMENTAL] VEX utilities",
-		SilenceErrors: true,
-		SilenceUsage:  true,
-		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
-			cmd.SetContext(log.WithContextPrefix(cmd.Context(), "vex"))
-
-			opts, err := vexFlags.ToOptions(args)
-			if err != nil {
-				return err
-			}
-			vexOptions = opts
-			return nil
-		},
-	}
-
-	repoCmd := &cobra.Command{
-		Use:           "repo subcommand",
-		Short:         "Manage VEX repositories",
-		SilenceErrors: true,
-		SilenceUsage:  true,
-		Example: `  # Initialize the configuration file
-  $ trivy vex repo init
-
-  # List VEX repositories
-  $ trivy vex repo list
-
-  # Download the VEX repositories
-  $ trivy vex repo download
-`,
-	}
-
-	repoCmd.AddCommand(
-		&cobra.Command{
-			Use:           "init",
-			Short:         "Initialize a configuration file",
-			SilenceErrors: true,
-			SilenceUsage:  true,
-			Args:          cobra.ExactArgs(0),
-			RunE: func(cmd *cobra.Command, _ []string) error {
-				if err := vexrepo.NewManager(vexOptions.CacheDir).Init(cmd.Context()); err != nil {
-					return xerrors.Errorf("config init error: %w", err)
-				}
-				return nil
-			},
-		},
-		&cobra.Command{
-			Use:           "list",
-			Short:         "List VEX repositories",
-			SilenceErrors: true,
-			SilenceUsage:  true,
-			Args:          cobra.ExactArgs(0),
-			RunE: func(cmd *cobra.Command, _ []string) error {
-				if err := vexrepo.NewManager(vexOptions.CacheDir).List(cmd.Context()); err != nil {
-					return xerrors.Errorf("list error: %w", err)
-				}
-				return nil
-			},
-		},
-		&cobra.Command{
-			Use:           "download [REPO_NAMES]",
-			Short:         "Download the VEX repositories",
-			Long:          `Downloads enabled VEX repositories. If specific repository names are provided as arguments, only those repositories will be downloaded. Otherwise, all enabled repositories are downloaded.`,
-			SilenceErrors: true,
-			SilenceUsage:  true,
-			RunE: func(cmd *cobra.Command, args []string) error {
-				err := vexrepo.NewManager(vexOptions.CacheDir).DownloadRepositories(cmd.Context(), args,
-					vexrepo.Options{Insecure: vexOptions.Insecure})
-				if err != nil {
-					return xerrors.Errorf("repository download error: %w", err)
-				}
-				return nil
-			},
-		},
-	)
-
-	cmd.AddCommand(repoCmd)
 	return cmd
 }
 

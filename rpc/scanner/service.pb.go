@@ -152,7 +152,6 @@ type ScanOptions struct {
 	IncludeDevDeps      bool                 `protobuf:"varint,5,opt,name=include_dev_deps,json=includeDevDeps,proto3" json:"include_dev_deps,omitempty"`
 	PkgRelationships    []string             `protobuf:"bytes,6,rep,name=pkg_relationships,json=pkgRelationships,proto3" json:"pkg_relationships,omitempty"`
 	Distro              *common.OS           `protobuf:"bytes,7,opt,name=distro,proto3" json:"distro,omitempty"`
-	VulnSeveritySources []string             `protobuf:"bytes,8,rep,name=vuln_severity_sources,json=vulnSeveritySources,proto3" json:"vuln_severity_sources,omitempty"`
 	LicenseFull         bool                 `protobuf:"varint,9,opt,name=license_full,json=licenseFull,proto3" json:"license_full,omitempty"`
 }
 
@@ -226,13 +225,6 @@ func (x *ScanOptions) GetPkgRelationships() []string {
 func (x *ScanOptions) GetDistro() *common.OS {
 	if x != nil {
 		return x.Distro
-	}
-	return nil
-}
-
-func (x *ScanOptions) GetVulnSeveritySources() []string {
-	if x != nil {
-		return x.VulnSeveritySources
 	}
 	return nil
 }

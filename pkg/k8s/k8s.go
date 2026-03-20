@@ -3,7 +3,6 @@ package k8s
 import (
 	"context"
 
-	"github.com/aquasecurity/trivy-db/pkg/db"
 	"github.com/aquasecurity/trivy/pkg/cache"
 	"github.com/aquasecurity/trivy/pkg/fanal/applier"
 	ftypes "github.com/aquasecurity/trivy/pkg/fanal/types"
@@ -11,7 +10,6 @@ import (
 	"github.com/aquasecurity/trivy/pkg/scan/local"
 	"github.com/aquasecurity/trivy/pkg/scan/ospkg"
 	"github.com/aquasecurity/trivy/pkg/types"
-	"github.com/aquasecurity/trivy/pkg/vulnerability"
 )
 
 // ScanKubernetes implements the scanner
@@ -35,9 +33,8 @@ func initializeScanK8s(localArtifactCache cache.LocalArtifactCache) *ScanKuberne
 	applier := applier.NewApplier(localArtifactCache)
 	osScanner := ospkg.NewScanner()
 	langScanner := langpkg.NewScanner()
-	vulnClient := vulnerability.NewClient(db.Config{})
 
-	localService := local.NewService(applier, osScanner, langScanner, vulnClient)
+	localService := local.NewService(applier, osScanner, langScanner)
 	return NewScanKubernetes(localService)
 }
 

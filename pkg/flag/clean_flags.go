@@ -27,11 +27,6 @@ var (
 		ConfigName: "clean.checks-bundle",
 		Usage:      "remove checks bundle",
 	}
-	CleanVEXRepo = Flag[bool]{
-		Name:       "vex-repo",
-		ConfigName: "clean.vex-repo",
-		Usage:      "remove VEX repositories",
-	}
 )
 
 type CleanFlagGroup struct {
@@ -40,7 +35,6 @@ type CleanFlagGroup struct {
 	CleanVulnerabilityDB *Flag[bool]
 	CleanJavaDB          *Flag[bool]
 	CleanChecksBundle    *Flag[bool]
-	CleanVEXRepositories *Flag[bool]
 }
 
 type CleanOptions struct {
@@ -49,7 +43,6 @@ type CleanOptions struct {
 	CleanVulnerabilityDB bool
 	CleanJavaDB          bool
 	CleanChecksBundle    bool
-	CleanVEXRepositories bool
 }
 
 func NewCleanFlagGroup() *CleanFlagGroup {
@@ -59,7 +52,6 @@ func NewCleanFlagGroup() *CleanFlagGroup {
 		CleanVulnerabilityDB: CleanVulnerabilityDB.Clone(),
 		CleanJavaDB:          CleanJavaDB.Clone(),
 		CleanChecksBundle:    CleanChecksBundle.Clone(),
-		CleanVEXRepositories: CleanVEXRepo.Clone(),
 	}
 }
 
@@ -74,7 +66,6 @@ func (fg *CleanFlagGroup) Flags() []Flagger {
 		fg.CleanVulnerabilityDB,
 		fg.CleanJavaDB,
 		fg.CleanChecksBundle,
-		fg.CleanVEXRepositories,
 	}
 }
 
@@ -85,7 +76,6 @@ func (fg *CleanFlagGroup) ToOptions(opts *Options) error {
 		CleanJavaDB:          fg.CleanJavaDB.Value(),
 		CleanChecksBundle:    fg.CleanChecksBundle.Value(),
 		CleanScanCache:       fg.CleanScanCache.Value(),
-		CleanVEXRepositories: fg.CleanVEXRepositories.Value(),
 	}
 	return nil
 }

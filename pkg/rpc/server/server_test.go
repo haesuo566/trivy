@@ -20,7 +20,6 @@ import (
 	"github.com/aquasecurity/trivy/pkg/scan/local"
 	"github.com/aquasecurity/trivy/pkg/scan/ospkg"
 	"github.com/aquasecurity/trivy/pkg/types"
-	"github.com/aquasecurity/trivy/pkg/vulnerability"
 	rpcCache "github.com/aquasecurity/trivy/rpc/cache"
 	"github.com/aquasecurity/trivy/rpc/common"
 	rpcScanner "github.com/aquasecurity/trivy/rpc/scanner"
@@ -49,7 +48,6 @@ func TestScanServer_Scan(t *testing.T) {
 						PkgTypes:            []string{types.PkgTypeOS},
 						Scanners:            []string{string(types.VulnerabilityScanner)},
 						PkgRelationships:    []string{ftypes.RelationshipUnknown.String()},
-						VulnSeveritySources: []string{"auto"},
 					},
 				},
 			},
@@ -94,28 +92,6 @@ func TestScanServer_Scan(t *testing.T) {
 				Results: []*rpcScanner.Result{
 					{
 						Target: "alpine:3.11 (alpine 3.11.5)",
-						Vulnerabilities: []*common.Vulnerability{
-							{
-								VulnerabilityId:  "CVE-2020-9999",
-								PkgName:          "musl",
-								InstalledVersion: "1.1.24-r2",
-								FixedVersion:     "1.2.4",
-								Severity:         common.Severity_HIGH,
-								Layer: &common.Layer{
-									DiffId: "sha256:beee9f30bc1f711043e78d4a2be0668955d4b761d587d6f60c2c8dc081efb203",
-								},
-								PrimaryUrl:  "https://avd.aquasec.com/nvd/cve-2020-9999",
-								Title:       "dos",
-								Description: "dos vulnerability",
-								Status:      3,
-								PkgIdentifier: &common.PkgIdentifier{
-									Purl: "pkg:apk/alpine/musl@1.1.24-r2?distro=3.11.5",
-									Uid:  "852936e86971b22e",
-								},
-								Cvss:           make(map[string]*common.CVSS),
-								VendorSeverity: make(map[string]common.Severity),
-							},
-						},
 						Type:  "alpine",
 						Class: "os-pkgs",
 						Packages: []*common.Package{
@@ -143,54 +119,6 @@ func TestScanServer_Scan(t *testing.T) {
 				},
 			},
 		},
-		{
-			name: "sad path: broken database",
-			args: args{
-				in: &rpcScanner.ScanRequest{
-					Target:     "alpine:3.11",
-					ArtifactId: "sha256:e7d92cdc71feacf90708cb59182d0df1b911f8ae022d29e8e95d75ca6a99776a",
-					BlobIds:    []string{"sha256:beee9f30bc1f711043e78d4a2be0668955d4b761d587d6f60c2c8dc081efb203"},
-					Options: &rpcScanner.ScanOptions{
-						PkgTypes:         []string{types.PkgTypeOS},
-						Scanners:         []string{string(types.VulnerabilityScanner)},
-						PkgRelationships: []string{ftypes.RelationshipUnknown.String()},
-					},
-				},
-			},
-			fixtures: []string{"../../scan/local/testdata/fixtures/sad.yaml"},
-			setUpCache: func(t *testing.T) cache.Cache {
-				c := cache.NewMemoryCache()
-				require.NoError(t, c.PutArtifact(t.Context(), "sha256:e7d92cdc71feacf90708cb59182d0df1b911f8ae022d29e8e95d75ca6a99776a", ftypes.ArtifactInfo{
-					SchemaVersion: 1,
-				}))
-
-				require.NoError(t, c.PutBlob(t.Context(), "sha256:beee9f30bc1f711043e78d4a2be0668955d4b761d587d6f60c2c8dc081efb203", ftypes.BlobInfo{
-					SchemaVersion: 1,
-					Digest:        "sha256:beee9f30bc1f711043e78d4a2be0668955d4b761d587d6f60c2c8dc081efb203",
-					DiffID:        "sha256:beee9f30bc1f711043e78d4a2be0668955d4b761d587d6f60c2c8dc081efb203",
-					OS: ftypes.OS{
-						Family: "alpine",
-						Name:   "3.11.5",
-					},
-					PackageInfos: []ftypes.PackageInfo{
-						{
-							FilePath: "lib/apk/db/installed",
-							Packages: ftypes.Packages{
-								{
-									Name:       "musl",
-									Version:    "1.1.24-r2",
-									SrcName:    "musl",
-									SrcVersion: "1.1.24-r2",
-								},
-							},
-						},
-					},
-				}))
-
-				return c
-			},
-			wantErr: "failed to detect vulnerabilities",
-		},
 	}
 
 	for _, tt := range tests {
@@ -204,7 +132,7 @@ func TestScanServer_Scan(t *testing.T) {
 
 			// Create scanner
 			applier := applier.NewApplier(c)
-			scanner := local.NewService(applier, ospkg.NewScanner(), langpkg.NewScanner(), vulnerability.NewClient(db.Config{}))
+			scanner := local.NewService(applier, ospkg.NewScanner(), langpkg.NewScanner())
 			s := NewScanServer(scanner)
 
 			got, err := s.Scan(t.Context(), tt.args.in)

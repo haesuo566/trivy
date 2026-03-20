@@ -2,15 +2,12 @@ package local
 
 import (
 	"testing"
-	"time"
 
 	"github.com/package-url/packageurl-go"
-	"github.com/samber/lo"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/aquasecurity/trivy-db/pkg/db"
-	dbTypes "github.com/aquasecurity/trivy-db/pkg/types"
 	"github.com/aquasecurity/trivy/internal/dbtest"
 	"github.com/aquasecurity/trivy/internal/hooktest"
 	"github.com/aquasecurity/trivy/pkg/cache"
@@ -19,7 +16,6 @@ import (
 	"github.com/aquasecurity/trivy/pkg/scan/langpkg"
 	"github.com/aquasecurity/trivy/pkg/scan/ospkg"
 	"github.com/aquasecurity/trivy/pkg/types"
-	"github.com/aquasecurity/trivy/pkg/vulnerability"
 )
 
 var (
@@ -176,7 +172,6 @@ func TestScanner_Scan(t *testing.T) {
 					},
 					PkgRelationships:    ftypes.Relationships,
 					Scanners:            types.Scanners{types.VulnerabilityScanner},
-					VulnSeveritySources: []dbTypes.SourceID{"auto"},
 				},
 			},
 			fixtures: []string{"testdata/fixtures/happy.yaml"},
@@ -215,25 +210,6 @@ func TestScanner_Scan(t *testing.T) {
 						Packages: ftypes.Packages{
 							muslPkg,
 						},
-						Vulnerabilities: []types.DetectedVulnerability{
-							{
-								VulnerabilityID:  "CVE-2020-9999",
-								PkgName:          muslPkg.Name,
-								PkgIdentifier:    muslPkg.Identifier,
-								InstalledVersion: muslPkg.Version,
-								FixedVersion:     "1.2.4",
-								Status:           dbTypes.StatusFixed,
-								Layer: ftypes.Layer{
-									DiffID: "sha256:5216338b40a7b96416b8b9858974bbe4acc3096ee60acbc4dfb1ee02aecceb10",
-								},
-								PrimaryURL: "https://avd.aquasec.com/nvd/cve-2020-9999",
-								Vulnerability: dbTypes.Vulnerability{
-									Title:       "dos",
-									Description: "dos vulnerability",
-									Severity:    "HIGH",
-								},
-							},
-						},
 					},
 					{
 						Target: "/app/Gemfile.lock",
@@ -241,30 +217,6 @@ func TestScanner_Scan(t *testing.T) {
 						Type:   ftypes.Bundler,
 						Packages: ftypes.Packages{
 							railsPkg,
-						},
-						Vulnerabilities: []types.DetectedVulnerability{
-							{
-								VulnerabilityID:  "CVE-2014-0081",
-								PkgName:          railsPkg.Name,
-								PkgIdentifier:    railsPkg.Identifier,
-								InstalledVersion: railsPkg.Version,
-								FixedVersion:     "4.0.3, 3.2.17",
-								Status:           dbTypes.StatusFixed,
-								Layer: ftypes.Layer{
-									DiffID: "sha256:0ea33a93585cf1917ba522b2304634c3073654062d5282c1346322967790ef33",
-								},
-								PrimaryURL: "https://avd.aquasec.com/nvd/cve-2014-0081",
-								Vulnerability: dbTypes.Vulnerability{
-									Title:       "xss",
-									Description: "xss vulnerability",
-									Severity:    "MEDIUM",
-									References: []string{
-										"http://example.com",
-									},
-									LastModifiedDate: lo.ToPtr(time.Date(2020, 2, 1, 1, 1, 0, 0, time.UTC)),
-									PublishedDate:    lo.ToPtr(time.Date(2020, 1, 1, 1, 1, 0, 0, time.UTC)),
-								},
-							},
 						},
 					},
 				},
@@ -297,7 +249,6 @@ func TestScanner_Scan(t *testing.T) {
 						Family: "alpine",
 						Name:   "3.11",
 					},
-					VulnSeveritySources: []dbTypes.SourceID{"auto"},
 				},
 			},
 			fixtures: []string{"testdata/fixtures/happy.yaml"},
@@ -328,25 +279,6 @@ func TestScanner_Scan(t *testing.T) {
 						Type:   ftypes.Alpine,
 						Packages: ftypes.Packages{
 							muslPkg,
-						},
-						Vulnerabilities: []types.DetectedVulnerability{
-							{
-								VulnerabilityID:  "CVE-2020-9999",
-								PkgName:          muslPkg.Name,
-								PkgIdentifier:    muslPkg.Identifier,
-								InstalledVersion: muslPkg.Version,
-								FixedVersion:     "1.2.4",
-								Status:           dbTypes.StatusFixed,
-								Layer: ftypes.Layer{
-									DiffID: "sha256:5216338b40a7b96416b8b9858974bbe4acc3096ee60acbc4dfb1ee02aecceb10",
-								},
-								PrimaryURL: "https://avd.aquasec.com/nvd/cve-2020-9999",
-								Vulnerability: dbTypes.Vulnerability{
-									Title:       "dos",
-									Description: "dos vulnerability",
-									Severity:    "HIGH",
-								},
-							},
 						},
 					},
 				},
@@ -587,7 +519,6 @@ func TestScanner_Scan(t *testing.T) {
 					},
 					PkgRelationships:    ftypes.Relationships,
 					Scanners:            types.Scanners{types.VulnerabilityScanner},
-					VulnSeveritySources: []dbTypes.SourceID{"auto"},
 				},
 			},
 			fixtures: []string{"testdata/fixtures/happy.yaml"},
@@ -633,30 +564,6 @@ func TestScanner_Scan(t *testing.T) {
 						Packages: ftypes.Packages{
 							railsPkg,
 						},
-						Vulnerabilities: []types.DetectedVulnerability{
-							{
-								VulnerabilityID:  "CVE-2014-0081",
-								PkgName:          railsPkg.Name,
-								PkgIdentifier:    railsPkg.Identifier,
-								InstalledVersion: railsPkg.Version,
-								FixedVersion:     "4.0.3, 3.2.17",
-								Status:           dbTypes.StatusFixed,
-								Layer: ftypes.Layer{
-									DiffID: "sha256:0ea33a93585cf1917ba522b2304634c3073654062d5282c1346322967790ef33",
-								},
-								PrimaryURL: "https://avd.aquasec.com/nvd/cve-2014-0081",
-								Vulnerability: dbTypes.Vulnerability{
-									Title:       "xss",
-									Description: "xss vulnerability",
-									Severity:    "MEDIUM",
-									References: []string{
-										"http://example.com",
-									},
-									LastModifiedDate: lo.ToPtr(time.Date(2020, 2, 1, 1, 1, 0, 0, time.UTC)),
-									PublishedDate:    lo.ToPtr(time.Date(2020, 1, 1, 1, 1, 0, 0, time.UTC)),
-								},
-							},
-						},
 					},
 				},
 				OS: ftypes.OS{},
@@ -677,7 +584,6 @@ func TestScanner_Scan(t *testing.T) {
 					PkgTypes:            []string{types.PkgTypeLibrary},
 					PkgRelationships:    ftypes.Relationships,
 					Scanners:            types.Scanners{types.VulnerabilityScanner},
-					VulnSeveritySources: []dbTypes.SourceID{"auto"},
 				},
 			},
 			fixtures: []string{"testdata/fixtures/happy.yaml"},
@@ -720,30 +626,6 @@ func TestScanner_Scan(t *testing.T) {
 								},
 							},
 						},
-						Vulnerabilities: []types.DetectedVulnerability{
-							{
-								VulnerabilityID:  "CVE-2014-0081",
-								PkgName:          railsPkg.Name,
-								PkgIdentifier:    railsPkg.Identifier,
-								InstalledVersion: railsPkg.Version,
-								FixedVersion:     "4.0.3, 3.2.17",
-								Status:           dbTypes.StatusFixed,
-								Layer: ftypes.Layer{
-									DiffID: "sha256:0ea33a93585cf1917ba522b2304634c3073654062d5282c1346322967790ef33",
-								},
-								PrimaryURL: "https://avd.aquasec.com/nvd/cve-2014-0081",
-								Vulnerability: dbTypes.Vulnerability{
-									Title:       "xss",
-									Description: "xss vulnerability",
-									Severity:    "MEDIUM",
-									References: []string{
-										"http://example.com",
-									},
-									LastModifiedDate: lo.ToPtr(time.Date(2020, 2, 1, 1, 1, 0, 0, time.UTC)),
-									PublishedDate:    lo.ToPtr(time.Date(2020, 1, 1, 1, 1, 0, 0, time.UTC)),
-								},
-							},
-						},
 					},
 					{
 						Target: "",
@@ -755,19 +637,6 @@ func TestScanner_Scan(t *testing.T) {
 								Version:      laravelPkg.Version,
 								Identifier:   laravelPkg.Identifier,
 								Relationship: ftypes.RelationshipDirect,
-								Layer: ftypes.Layer{
-									DiffID: "sha256:0ea33a93585cf1917ba522b2304634c3073654062d5282c1346322967790ef33",
-								},
-							},
-						},
-						Vulnerabilities: []types.DetectedVulnerability{
-							{
-								VulnerabilityID:  "CVE-2021-21263",
-								PkgName:          laravelPkg.Name,
-								PkgIdentifier:    laravelPkg.Identifier,
-								InstalledVersion: laravelPkg.Version,
-								FixedVersion:     "8.22.1, 7.30.3, 6.20.12",
-								Status:           dbTypes.StatusFixed,
 								Layer: ftypes.Layer{
 									DiffID: "sha256:0ea33a93585cf1917ba522b2304634c3073654062d5282c1346322967790ef33",
 								},
@@ -789,7 +658,6 @@ func TestScanner_Scan(t *testing.T) {
 					},
 					PkgRelationships:    ftypes.Relationships,
 					Scanners:            types.Scanners{types.VulnerabilityScanner},
-					VulnSeveritySources: []dbTypes.SourceID{"auto"},
 				},
 			},
 			fixtures: []string{"testdata/fixtures/happy.yaml"},
@@ -829,30 +697,6 @@ func TestScanner_Scan(t *testing.T) {
 						Packages: ftypes.Packages{
 							railsPkg,
 						},
-						Vulnerabilities: []types.DetectedVulnerability{
-							{
-								VulnerabilityID:  "CVE-2014-0081",
-								PkgName:          "rails",
-								PkgIdentifier:    railsPkg.Identifier,
-								InstalledVersion: railsPkg.Version,
-								FixedVersion:     "4.0.3, 3.2.17",
-								Status:           dbTypes.StatusFixed,
-								Layer: ftypes.Layer{
-									DiffID: "sha256:0ea33a93585cf1917ba522b2304634c3073654062d5282c1346322967790ef33",
-								},
-								PrimaryURL: "https://avd.aquasec.com/nvd/cve-2014-0081",
-								Vulnerability: dbTypes.Vulnerability{
-									Title:       "xss",
-									Description: "xss vulnerability",
-									Severity:    "MEDIUM",
-									References: []string{
-										"http://example.com",
-									},
-									LastModifiedDate: lo.ToPtr(time.Date(2020, 2, 1, 1, 1, 0, 0, time.UTC)),
-									PublishedDate:    lo.ToPtr(time.Date(2020, 1, 1, 1, 1, 0, 0, time.UTC)),
-								},
-							},
-						},
 					},
 				},
 				OS: ftypes.OS{
@@ -880,7 +724,6 @@ func TestScanner_Scan(t *testing.T) {
 					},
 					PkgRelationships:    ftypes.Relationships,
 					Scanners:            types.Scanners{types.VulnerabilityScanner},
-					VulnSeveritySources: []dbTypes.SourceID{"auto"},
 				},
 			},
 			fixtures: []string{"testdata/fixtures/happy.yaml"},
@@ -913,30 +756,6 @@ func TestScanner_Scan(t *testing.T) {
 						Class:    types.ClassLangPkg,
 						Type:     ftypes.Bundler,
 						Packages: ftypes.Packages{railsPkg},
-						Vulnerabilities: []types.DetectedVulnerability{
-							{
-								VulnerabilityID:  "CVE-2014-0081",
-								PkgName:          railsPkg.Name,
-								PkgIdentifier:    railsPkg.Identifier,
-								InstalledVersion: railsPkg.Version,
-								FixedVersion:     "4.0.3, 3.2.17",
-								Status:           dbTypes.StatusFixed,
-								Layer: ftypes.Layer{
-									DiffID: "sha256:0ea33a93585cf1917ba522b2304634c3073654062d5282c1346322967790ef33",
-								},
-								PrimaryURL: "https://avd.aquasec.com/nvd/cve-2014-0081",
-								Vulnerability: dbTypes.Vulnerability{
-									Title:       "xss",
-									Description: "xss vulnerability",
-									Severity:    "MEDIUM",
-									References: []string{
-										"http://example.com",
-									},
-									LastModifiedDate: lo.ToPtr(time.Date(2020, 2, 1, 1, 1, 0, 0, time.UTC)),
-									PublishedDate:    lo.ToPtr(time.Date(2020, 1, 1, 1, 1, 0, 0, time.UTC)),
-								},
-							},
-						},
 					},
 				},
 				OS: ftypes.OS{
@@ -991,7 +810,6 @@ func TestScanner_Scan(t *testing.T) {
 						ftypes.RelationshipIndirect,
 					},
 					Scanners:            types.Scanners{types.VulnerabilityScanner},
-					VulnSeveritySources: []dbTypes.SourceID{"auto"},
 				},
 			},
 			fixtures: []string{"testdata/fixtures/happy.yaml"},
@@ -1038,30 +856,6 @@ func TestScanner_Scan(t *testing.T) {
 						Class:    types.ClassLangPkg,
 						Type:     ftypes.Bundler,
 						Packages: ftypes.Packages{railsPkg},
-						Vulnerabilities: []types.DetectedVulnerability{
-							{
-								VulnerabilityID:  "CVE-2014-0081",
-								PkgName:          railsPkg.Name,
-								PkgIdentifier:    railsPkg.Identifier,
-								InstalledVersion: railsPkg.Version,
-								FixedVersion:     "4.0.3, 3.2.17",
-								Status:           dbTypes.StatusFixed,
-								Layer: ftypes.Layer{
-									DiffID: "sha256:0ea33a93585cf1917ba522b2304634c3073654062d5282c1346322967790ef33",
-								},
-								PrimaryURL: "https://avd.aquasec.com/nvd/cve-2014-0081",
-								Vulnerability: dbTypes.Vulnerability{
-									Title:       "xss",
-									Description: "xss vulnerability",
-									Severity:    "MEDIUM",
-									References: []string{
-										"http://example.com",
-									},
-									LastModifiedDate: lo.ToPtr(time.Date(2020, 2, 1, 1, 1, 0, 0, time.UTC)),
-									PublishedDate:    lo.ToPtr(time.Date(2020, 1, 1, 1, 1, 0, 0, time.UTC)),
-								},
-							},
-						},
 					},
 					{
 						Target:   "/app/composer-lock.json",
@@ -1091,7 +885,6 @@ func TestScanner_Scan(t *testing.T) {
 					PkgTypes:            []string{types.PkgTypeOS},
 					PkgRelationships:    ftypes.Relationships,
 					Scanners:            types.Scanners{types.VulnerabilityScanner},
-					VulnSeveritySources: []dbTypes.SourceID{"auto"},
 				},
 			},
 			fixtures:  []string{"testdata/fixtures/happy.yaml"},
@@ -1123,28 +916,6 @@ func TestScanner_Scan(t *testing.T) {
 						Type:   ftypes.Alpine,
 						Packages: ftypes.Packages{
 							muslPkg,
-						},
-						Vulnerabilities: []types.DetectedVulnerability{
-							{
-								VulnerabilityID:  "CVE-2020-9999",
-								PkgName:          muslPkg.Name,
-								PkgIdentifier:    muslPkg.Identifier,
-								InstalledVersion: muslPkg.Version,
-								FixedVersion:     "1.2.4",
-								Status:           dbTypes.StatusFixed,
-								Layer: ftypes.Layer{
-									DiffID: "sha256:5216338b40a7b96416b8b9858974bbe4acc3096ee60acbc4dfb1ee02aecceb10",
-								},
-								PrimaryURL: "https://avd.aquasec.com/nvd/cve-2020-9999",
-								Vulnerability: dbTypes.Vulnerability{
-									Title:       "dos",
-									Description: "dos vulnerability",
-									Severity:    "HIGH",
-									References: []string{
-										"https://example.com/post-scan", // modified by post-scan hook
-									},
-								},
-							},
 						},
 					},
 				},
@@ -1333,48 +1104,6 @@ func TestScanner_Scan(t *testing.T) {
 			wantErr: "failed to apply layers",
 		},
 		{
-			name: "sad path: library.Detect returns an error",
-			args: args{
-				target:   "alpine:latest",
-				layerIDs: []string{"sha256:5216338b40a7b96416b8b9858974bbe4acc3096ee60acbc4dfb1ee02aecceb10"},
-				options: types.ScanOptions{
-					PkgTypes:         []string{types.PkgTypeLibrary},
-					PkgRelationships: ftypes.Relationships,
-					Scanners:         types.Scanners{types.VulnerabilityScanner},
-				},
-			},
-			fixtures: []string{"testdata/fixtures/sad.yaml"},
-			setupCache: func(t *testing.T) cache.Cache {
-				c := cache.NewMemoryCache()
-				require.NoError(t, c.PutBlob(t.Context(), "sha256:5216338b40a7b96416b8b9858974bbe4acc3096ee60acbc4dfb1ee02aecceb10", ftypes.BlobInfo{
-					SchemaVersion: ftypes.BlobJSONSchemaVersion,
-					Size:          1000,
-					DiffID:        "sha256:5216338b40a7b96416b8b9858974bbe4acc3096ee60acbc4dfb1ee02aecceb10",
-					OS: ftypes.OS{
-						Family: "alpine",
-						Name:   "3.11",
-					},
-					Applications: []ftypes.Application{
-						{
-							Type:     ftypes.Bundler,
-							FilePath: "/app/Gemfile.lock",
-							Packages: []ftypes.Package{
-								{
-									Name:    "rails",
-									Version: "6.0",
-									Layer: ftypes.Layer{
-										DiffID: "sha256:9bdb2c849099a99c8ab35f6fd7469c623635e8f4479a0a5a3df61e22bae509f6",
-									},
-								},
-							},
-						},
-					},
-				}))
-				return c
-			},
-			wantErr: "failed to scan application libraries",
-		},
-		{
 			name: "scan image history",
 			args: args{
 				target:   "alpine:latest",
@@ -1527,7 +1256,7 @@ func TestScanner_Scan(t *testing.T) {
 
 			c := tt.setupCache(t)
 			a := applier.NewApplier(c)
-			s := NewService(a, ospkg.NewScanner(), langpkg.NewScanner(), vulnerability.NewClient(db.Config{}))
+			s := NewService(a, ospkg.NewScanner(), langpkg.NewScanner())
 
 			gotResponse, err := s.Scan(t.Context(), tt.args.target, "", tt.args.layerIDs, tt.args.options)
 			if tt.wantErr != "" {

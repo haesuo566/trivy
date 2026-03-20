@@ -3,7 +3,6 @@ package ospkg
 import (
 	"context"
 
-	"github.com/samber/lo"
 	"golang.org/x/xerrors"
 
 	"github.com/aquasecurity/trivy/pkg/detector/ospkg/alma"
@@ -92,35 +91,9 @@ func (d *Detector) Detect(ctx context.Context) ([]types.DetectedVulnerability, b
 
 	eosl := !d.driver.IsSupportedVersion(ctx, d.target.OS.Family, d.target.OS.Name)
 
-	filteredPkgs := filterPkgs(ctx, d.target.Packages)
-	vulns, err := d.driver.Detect(ctx, d.target.OS.Name, d.target.Repository, filteredPkgs)
-	if err != nil {
-		return nil, false, xerrors.Errorf("failed detection: %w", err)
-	}
-
-	return vulns, eosl, nil
+	return nil, eosl, nil
 }
 
-// filterPkgs filters out packages that should not be scanned:
-//   - gpg-pubkey: doesn't use the correct version
-//   - Third-party packages: not covered by official OS security advisories
-func filterPkgs(ctx context.Context, pkgs []ftypes.Package) []ftypes.Package {
-	var skipped []string
-	filtered := lo.Filter(pkgs, func(pkg ftypes.Package, _ int) bool {
-		if pkg.Name == "gpg-pubkey" {
-			return false
-		}
-		if pkg.Repository.Class == ftypes.RepositoryClassThirdParty {
-			skipped = append(skipped, pkg.Name)
-			return false
-		}
-		return true
-	})
-	if len(skipped) > 0 {
-		log.DebugContext(ctx, "Skipping third-party packages", log.Any("packages", skipped))
-	}
-	return filtered
-}
 
 func newDriver(osFamily ftypes.OSType, pkgs []ftypes.Package) (driver.Driver, error) {
 	// Try providers first

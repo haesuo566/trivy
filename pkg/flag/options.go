@@ -419,7 +419,6 @@ type Options struct {
 	ReportOptions
 	ScanOptions
 	SecretOptions
-	VulnerabilityOptions
 
 	// Trivy's version, not populated via CLI flags
 	AppVersion string
@@ -447,8 +446,8 @@ func (o *Options) Align(f *Flags) error {
 	if packageFlagGroup, ok := findFlagGroup[*PackageFlagGroup](f); ok &&
 		packageFlagGroup.PkgRelationships != nil &&
 		slices.Compare(o.PkgRelationships, ftypes.Relationships) != 0 &&
-		(o.DependencyTree || slices.Contains(types.SupportedSBOMFormats, o.Format) || len(o.VEXSources) != 0) {
-		return xerrors.Errorf("'--pkg-relationships' cannot be used with '--dependency-tree', '--vex' or SBOM formats")
+		(o.DependencyTree || slices.Contains(types.SupportedSBOMFormats, o.Format)) {
+		return xerrors.Errorf("'--pkg-relationships' cannot be used with '--dependency-tree' or SBOM formats")
 	}
 
 	if o.Compliance.Spec.ID != "" {
@@ -514,7 +513,6 @@ func (o *Options) ScanOpts() types.ScanOptions {
 		FilePatterns:        o.FilePatterns,
 		IncludeDevDeps:      o.IncludeDevDeps,
 		Distro:              o.Distro,
-		VulnSeveritySources: o.VulnSeveritySources,
 	}
 }
 
@@ -535,13 +533,11 @@ func (o *Options) RegistryOpts() ftypes.RegistryOptions {
 func (o *Options) FilterOpts() result.FilterOptions {
 	return result.FilterOptions{
 		Severities:         o.Severities,
-		IgnoreStatuses:     o.IgnoreStatuses,
 		IncludeNonFailures: o.IncludeNonFailures,
 		IgnoreFile:         o.IgnoreFile,
 		PolicyFile:         o.IgnorePolicy,
 		IgnoreLicenses:     o.IgnoredLicenses,
 		CacheDir:           o.CacheDir,
-		VEXSources:         o.VEXSources,
 	}
 }
 
@@ -751,7 +747,6 @@ func HiddenFlags() []string {
 		NewScanFlagGroup(),
 		NewSecretFlagGroup(),
 		NewServerFlags(),
-		NewVulnerabilityFlagGroup(),
 	}
 
 	var hiddenFlags []string

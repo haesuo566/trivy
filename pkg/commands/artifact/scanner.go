@@ -5,7 +5,6 @@ import (
 
 	"golang.org/x/xerrors"
 
-	"github.com/aquasecurity/trivy-db/pkg/db"
 	"github.com/aquasecurity/trivy/pkg/cache"
 	"github.com/aquasecurity/trivy/pkg/fanal/applier"
 	"github.com/aquasecurity/trivy/pkg/fanal/artifact"
@@ -21,7 +20,6 @@ import (
 	"github.com/aquasecurity/trivy/pkg/scan/langpkg"
 	"github.com/aquasecurity/trivy/pkg/scan/local"
 	"github.com/aquasecurity/trivy/pkg/scan/ospkg"
-	"github.com/aquasecurity/trivy/pkg/vulnerability"
 )
 
 // newArtifactFunc is a function that creates an artifact with its cleanup function.
@@ -252,8 +250,7 @@ func createLocalService(conf ScannerConfig, newArtifact newArtifactFunc) (scan.S
 	app := applier.NewApplier(c)
 	osScanner := ospkg.NewScanner()
 	langScanner := langpkg.NewScanner()
-	vulnClient := vulnerability.NewClient(db.Config{})
-	service := local.NewService(app, osScanner, langScanner, vulnClient)
+	service := local.NewService(app, osScanner, langScanner)
 
 	art, cleanupArtifact, err := newArtifact(c)
 	if err != nil {

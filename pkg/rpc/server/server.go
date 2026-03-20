@@ -7,8 +7,6 @@ import (
 	"golang.org/x/xerrors"
 	"google.golang.org/protobuf/types/known/emptypb"
 
-	"github.com/aquasecurity/trivy-db/pkg/db"
-	dbTypes "github.com/aquasecurity/trivy-db/pkg/types"
 	"github.com/aquasecurity/trivy/pkg/cache"
 	"github.com/aquasecurity/trivy/pkg/fanal/applier"
 	ftypes "github.com/aquasecurity/trivy/pkg/fanal/types"
@@ -19,9 +17,7 @@ import (
 	"github.com/aquasecurity/trivy/pkg/scan/local"
 	"github.com/aquasecurity/trivy/pkg/scan/ospkg"
 	"github.com/aquasecurity/trivy/pkg/types"
-	"github.com/aquasecurity/trivy/pkg/vulnerability"
 	xslices "github.com/aquasecurity/trivy/pkg/x/slices"
-	xstrings "github.com/aquasecurity/trivy/pkg/x/strings"
 	rpcCache "github.com/aquasecurity/trivy/rpc/cache"
 	rpcScanner "github.com/aquasecurity/trivy/rpc/scanner"
 )
@@ -42,9 +38,8 @@ func initializeScanServer(localArtifactCache cache.LocalArtifactCache) *ScanServ
 	applier := applier.NewApplier(localArtifactCache)
 	osScanner := ospkg.NewScanner()
 	langScanner := langpkg.NewScanner()
-	vulnClient := vulnerability.NewClient(db.Config{})
 
-	localService := local.NewService(applier, osScanner, langScanner, vulnClient)
+	localService := local.NewService(applier, osScanner, langScanner)
 	return NewScanServer(localService)
 }
 
@@ -93,13 +88,6 @@ func (s *ScanServer) ToOptions(in *rpcScanner.ScanOptions) types.ScanOptions {
 		distro.Name = in.Distro.Name
 	}
 
-	vulnSeveritySources := xstrings.ToTSlice[dbTypes.SourceID](in.VulnSeveritySources)
-	if len(vulnSeveritySources) == 0 {
-		vulnSeveritySources = []dbTypes.SourceID{
-			"auto", // For backward compatibility
-		}
-	}
-
 	return types.ScanOptions{
 		PkgTypes:            in.PkgTypes,
 		PkgRelationships:    pkgRelationships,
@@ -108,7 +96,6 @@ func (s *ScanServer) ToOptions(in *rpcScanner.ScanOptions) types.ScanOptions {
 		LicenseCategories:   licenseCategories,
 		LicenseFull:         in.LicenseFull,
 		Distro:              distro,
-		VulnSeveritySources: vulnSeveritySources,
 	}
 }
 

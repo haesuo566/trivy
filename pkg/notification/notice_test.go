@@ -398,27 +398,27 @@ func TestCheckCommandHeaders(t *testing.T) {
 		{
 			name:                      "filesystem command with flags",
 			command:                   "fs",
-			commandArgs:               []string{"--severity=HIGH", "--vex", "repo", "--vuln-severity-source", "nvd,debian", "../trivy-ci-test"},
+			commandArgs:               []string{"--severity=HIGH", "../trivy-ci-test"},
 			expectedCommandHeader:     "fs",
-			expectedCommandArgsHeader: "--severity=HIGH --vex=*** --vuln-severity-source=nvd,debian",
+			expectedCommandArgsHeader: "--severity=HIGH",
 		},
 		{
 			name:                      "filesystem command with flags including an invalid flag",
 			command:                   "fs",
-			commandArgs:               []string{"--severity=HIGH", "--vex", "repo", "--vuln-severity-source", "nvd,debian", "--invalid-flag", "../trivy-ci-test"},
+			commandArgs:               []string{"--severity=HIGH", "--invalid-flag", "../trivy-ci-test"},
 			ignoreParseError:          true,
 			expectedCommandHeader:     "fs",
-			expectedCommandArgsHeader: "--severity=HIGH --vex=*** --vuln-severity-source=nvd,debian",
+			expectedCommandArgsHeader: "--severity=HIGH",
 		},
 		{
 			name:        "filesystem with environment variables",
 			command:     "fs",
-			commandArgs: []string{"--severity", "HIGH", "--vex", "repo", "/home/user/code"},
+			commandArgs: []string{"--severity", "HIGH", "/home/user/code"},
 			env: map[string]string{
 				"TRIVY_SCANNERS": "secret,misconfig",
 			},
 			expectedCommandHeader:     "fs",
-			expectedCommandArgsHeader: "--severity=HIGH --scanners=secret,misconfig --vex=***",
+			expectedCommandArgsHeader: "--severity=HIGH --scanners=secret,misconfig",
 		},
 	}
 
@@ -461,7 +461,6 @@ func getOptionsForArgs(t *testing.T, commandArgs []string, ignoreParseError bool
 		flag.NewPackageFlagGroup(),
 		flag.NewReportFlagGroup(),
 		flag.NewScanFlagGroup(),
-		flag.NewVulnerabilityFlagGroup(),
 	}
 
 	// simple command to facilitate flag parsing

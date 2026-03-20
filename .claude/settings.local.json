@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(node:*)",
+      "Bash(go test:*)",
+      "Bash(go build:*)",
+      "Bash(awk:*)"
+    ]
+  }
+}

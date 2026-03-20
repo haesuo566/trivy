@@ -99,7 +99,6 @@ func (s Service) Scan(ctx context.Context, target, artifactKey string, blobKeys 
 				LicenseFull:         opts.LicenseFull,
 				IncludeDevDeps:      opts.IncludeDevDeps,
 				Distro:              distro,
-				VulnSeveritySources: xstrings.ToStringSlice(opts.VulnSeveritySources),
 			},
 		})
 		return err

@@ -1,16 +1,7 @@
 package library
 
 import (
-	"fmt"
-	"strings"
-
-	"github.com/samber/lo"
-	"golang.org/x/xerrors"
-
-	"github.com/aquasecurity/trivy-db/pkg/db"
 	"github.com/aquasecurity/trivy-db/pkg/ecosystem"
-	dbTypes "github.com/aquasecurity/trivy-db/pkg/types"
-	"github.com/aquasecurity/trivy-db/pkg/vulnsrc/vulnerability"
 	"github.com/aquasecurity/trivy/pkg/detector/library/compare"
 	"github.com/aquasecurity/trivy/pkg/detector/library/compare/bitnami"
 	"github.com/aquasecurity/trivy/pkg/detector/library/compare/maven"
@@ -93,7 +84,6 @@ func NewDriver(libType ftypes.LangType) (Driver, bool) {
 	return Driver{
 		ecosystem: eco,
 		comparer:  comparer,
-		dbc:       db.Config{},
 	}, true
 }
 
@@ -101,7 +91,6 @@ func NewDriver(libType ftypes.LangType) (Driver, bool) {
 type Driver struct {
 	ecosystem ecosystem.Type
 	comparer  compare.Comparer
-	dbc       db.Config
 }
 
 // Type returns the driver ecosystem
@@ -109,58 +98,8 @@ func (d *Driver) Type() string {
 	return string(d.ecosystem)
 }
 
-// DetectVulnerabilities scans buckets with the prefix according to the ecosystem.
-// If "ecosystem" is pip, it looks for buckets with "pip::" and gets security advisories from those buckets.
-// It allows us to add a new data source with the ecosystem prefix (e.g. pip::new-data-source)
-// and detect vulnerabilities without specifying a specific bucket name.
+// DetectVulnerabilities returns empty results as vulnerability scanning has been removed.
 func (d *Driver) DetectVulnerabilities(pkgID, pkgName, pkgVer string) ([]types.DetectedVulnerability, error) {
-	// e.g. "pip::", "npm::"
-	prefix := fmt.Sprintf("%s::", d.ecosystem)
-	advisories, err := d.dbc.GetAdvisories(prefix, vulnerability.NormalizePkgName(d.ecosystem, pkgName))
-	if err != nil {
-		return nil, xerrors.Errorf("failed to get %s advisories: %w", d.ecosystem, err)
-	}
-
-	var vulns []types.DetectedVulnerability
-	for _, adv := range advisories {
-		if !d.comparer.IsVulnerable(pkgVer, adv) {
-			continue
-		}
-
-		vuln := types.DetectedVulnerability{
-			VulnerabilityID:  adv.VulnerabilityID,
-			VendorIDs:        adv.VendorIDs, // Any vendors have specific IDs, e.g. GHSA, JLSEC
-			PkgID:            pkgID,
-			PkgName:          pkgName,
-			InstalledVersion: pkgVer,
-			FixedVersion:     createFixedVersions(adv),
-			DataSource:       adv.DataSource,
-			Custom:           adv.Custom,
-		}
-		vulns = append(vulns, vuln)
-	}
-
-	return vulns, nil
+	return nil, nil
 }
 
-func createFixedVersions(advisory dbTypes.Advisory) string {
-	if len(advisory.PatchedVersions) != 0 {
-		return joinFixedVersions(advisory.PatchedVersions)
-	}
-
-	var fixedVersions []string
-	for _, version := range advisory.VulnerableVersions {
-		for s := range strings.SplitSeq(version, ",") {
-			s = strings.TrimSpace(s)
-			if !strings.HasPrefix(s, "<=") && strings.HasPrefix(s, "<") {
-				s = strings.TrimPrefix(s, "<")
-				fixedVersions = append(fixedVersions, strings.TrimSpace(s))
-			}
-		}
-	}
-	return joinFixedVersions(fixedVersions)
-}
-
-func joinFixedVersions(fixedVersions []string) string {
-	return strings.Join(lo.Uniq(fixedVersions), ", ")
-}

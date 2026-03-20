@@ -21,9 +21,8 @@ func TestReportFlagGroup_ToOptions(t *testing.T) {
 		format           types.Format
 		template         string
 		dependencyTree   bool
-		listAllPkgs      bool
-		ignoreUnfixed    bool
-		ignoreFile       string
+		listAllPkgs  bool
+		ignoreFile   string
 		exitCode         int
 		exitOnEOSL       bool
 		ignorePolicy     string
@@ -212,7 +211,6 @@ func TestReportFlagGroup_ToOptions(t *testing.T) {
 			setValue(flag.DependencyTreeFlag.ConfigName, tt.fields.dependencyTree)
 			setValue(flag.ListAllPkgsFlag.ConfigName, tt.fields.listAllPkgs)
 			setValue(flag.IgnoreFileFlag.ConfigName, tt.fields.ignoreFile)
-			setValue(flag.IgnoreUnfixedFlag.ConfigName, tt.fields.ignoreUnfixed)
 			setValue(flag.IgnorePolicyFlag.ConfigName, tt.fields.ignorePolicy)
 			setValue(flag.ExitCodeFlag.ConfigName, tt.fields.exitCode)
 			setValue(flag.ExitOnEOLFlag.ConfigName, tt.fields.exitOnEOSL)

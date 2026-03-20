@@ -147,11 +147,6 @@ func NewRunner(ctx context.Context, cliOptions flag.Options, targetKind TargetKi
 		return nil, xerrors.Errorf("DB error: %w", err)
 	}
 
-	// Update the VEX repositories if needed
-	if err := operation.DownloadVEXRepositories(ctx, cliOptions); err != nil {
-		return nil, xerrors.Errorf("VEX repositories download error: %w", err)
-	}
-
 	// Initialize WASM modules
 	m, err := module.NewManager(ctx, module.Options{
 		Dir:            cliOptions.ModuleDir,

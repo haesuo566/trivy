@@ -31,7 +31,6 @@ func TestRun(t *testing.T) {
 				assert.NoDirExists(t, filepath.Join(dir, "db"))
 				assert.NoDirExists(t, filepath.Join(dir, "java-db"))
 				assert.NoDirExists(t, filepath.Join(dir, "policy"))
-				assert.NoDirExists(t, filepath.Join(dir, "vex"))
 				assert.DirExists(t, dir)
 			},
 		},
@@ -46,7 +45,6 @@ func TestRun(t *testing.T) {
 				assert.DirExists(t, filepath.Join(dir, "db"))
 				assert.DirExists(t, filepath.Join(dir, "java-db"))
 				assert.DirExists(t, filepath.Join(dir, "policy"))
-				assert.DirExists(t, filepath.Join(dir, "vex"))
 			},
 		},
 		{
@@ -60,7 +58,6 @@ func TestRun(t *testing.T) {
 				assert.DirExists(t, filepath.Join(dir, "fanal"))
 				assert.DirExists(t, filepath.Join(dir, "java-db"))
 				assert.DirExists(t, filepath.Join(dir, "policy"))
-				assert.DirExists(t, filepath.Join(dir, "vex"))
 			},
 		},
 		{
@@ -74,7 +71,6 @@ func TestRun(t *testing.T) {
 				assert.DirExists(t, filepath.Join(dir, "fanal"))
 				assert.DirExists(t, filepath.Join(dir, "db"))
 				assert.DirExists(t, filepath.Join(dir, "policy"))
-				assert.DirExists(t, filepath.Join(dir, "vex"))
 			},
 		},
 		{
@@ -88,21 +84,6 @@ func TestRun(t *testing.T) {
 				assert.DirExists(t, filepath.Join(dir, "fanal"))
 				assert.DirExists(t, filepath.Join(dir, "db"))
 				assert.DirExists(t, filepath.Join(dir, "java-db"))
-				assert.DirExists(t, filepath.Join(dir, "vex"))
-			},
-		},
-		{
-			name: "clean vex repositories",
-			cleanOpts: flag.CleanOptions{
-				CleanVEXRepositories: true,
-			},
-			wantErr: false,
-			checkFunc: func(t *testing.T, dir string) {
-				assert.DirExists(t, filepath.Join(dir, "policy"))
-				assert.DirExists(t, filepath.Join(dir, "fanal"))
-				assert.DirExists(t, filepath.Join(dir, "db"))
-				assert.DirExists(t, filepath.Join(dir, "java-db"))
-				assert.NoDirExists(t, filepath.Join(dir, "vex"))
 			},
 		},
 		{
@@ -149,7 +130,6 @@ func createTestFiles(t *testing.T, dir string) {
 		"db",
 		"java-db",
 		"policy",
-		"vex",
 	}
 	for _, subdir := range subdirs {
 		err := os.MkdirAll(filepath.Join(dir, subdir), 0o755)
