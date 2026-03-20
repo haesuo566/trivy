@@ -92,14 +92,14 @@ func TestDBFlagGroup_ToOptions(t *testing.T) {
 			viper.Set(flag.SkipDBUpdateFlag.ConfigName, tt.fields.SkipDBUpdate)
 			viper.Set(flag.DownloadDBOnlyFlag.ConfigName, tt.fields.DownloadDBOnly)
 			viper.Set(flag.DBRepositoryFlag.ConfigName, tt.fields.DBRepository)
-			viper.Set(flag.JavaDBRepositoryFlag.ConfigName, tt.fields.JavaDBRepository)
+			// viper.Set(flag.JavaDBRepositoryFlag.ConfigName, tt.fields.JavaDBRepository)
 
 			// Assert options
 			f := &flag.DBFlagGroup{
-				DownloadDBOnly:     flag.DownloadDBOnlyFlag.Clone(),
-				SkipDBUpdate:       flag.SkipDBUpdateFlag.Clone(),
-				DBRepositories:     flag.DBRepositoryFlag.Clone(),
-				JavaDBRepositories: flag.JavaDBRepositoryFlag.Clone(),
+				DownloadDBOnly: flag.DownloadDBOnlyFlag.Clone(),
+				SkipDBUpdate:   flag.SkipDBUpdateFlag.Clone(),
+				DBRepositories: flag.DBRepositoryFlag.Clone(),
+				// JavaDBRepositories: flag.JavaDBRepositoryFlag.Clone(),
 			}
 			flags := flag.Flags{f}
 			got, err := flags.ToOptions(nil)

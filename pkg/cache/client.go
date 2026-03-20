@@ -1,7 +1,6 @@
 package cache
 
 import (
-	"strings"
 	"time"
 
 	"golang.org/x/xerrors"
@@ -12,28 +11,21 @@ import (
 const (
 	TypeUnknown Type = "unknown"
 	TypeFS      Type = "fs"
-	TypeRedis   Type = "redis"
 	TypeMemory  Type = "memory"
 )
 
 type Type string
 
 type Options struct {
-	Backend     string
-	CacheDir    string
-	RedisCACert string
-	RedisCert   string
-	RedisKey    string
-	RedisTLS    bool
-	TTL         time.Duration
+	Backend  string
+	CacheDir string
+	TTL      time.Duration
 }
 
 func NewType(backend string) Type {
 	// "redis://" or "fs" are allowed for now
 	// An empty value is also allowed for testability
 	switch {
-	case strings.HasPrefix(backend, "redis://"):
-		return TypeRedis
 	case backend == "fs", backend == "":
 		return TypeFS
 	case backend == "memory":
@@ -51,12 +43,6 @@ func New(opts Options) (Cache, func(), error) {
 	t := NewType(opts.Backend)
 	log.Debug("Initializing scan cache...", log.String("type", string(t)))
 	switch t {
-	case TypeRedis:
-		redisCache, err := NewRedisCache(opts.Backend, opts.RedisCACert, opts.RedisCert, opts.RedisKey, opts.RedisTLS, opts.TTL)
-		if err != nil {
-			return nil, cleanup, xerrors.Errorf("unable to initialize redis cache: %w", err)
-		}
-		cache = redisCache
 	case TypeFS:
 		// standalone mode
 		fsCache, err := NewFSCache(opts.CacheDir)

@@ -7,7 +7,6 @@ import (
 	"golang.org/x/xerrors"
 
 	"github.com/aquasecurity/trivy/pkg/db"
-	"github.com/aquasecurity/trivy/pkg/javadb"
 	"github.com/aquasecurity/trivy/pkg/log"
 )
 
@@ -56,12 +55,12 @@ var (
 		Default:    []string{db.DefaultGCRRepository, db.DefaultGHCRRepository},
 		Usage:      "OCI repository(ies) to retrieve trivy-db in order of priority",
 	}
-	JavaDBRepositoryFlag = Flag[[]string]{
-		Name:       "java-db-repository",
-		ConfigName: "db.java-repository",
-		Default:    []string{javadb.DefaultGCRRepository, javadb.DefaultGHCRRepository},
-		Usage:      "OCI repository(ies) to retrieve trivy-java-db in order of priority",
-	}
+	// JavaDBRepositoryFlag = Flag[[]string]{
+	// 	Name:       "java-db-repository",
+	// 	ConfigName: "db.java-repository",
+	// 	Default:    []string{javadb.DefaultGCRRepository, javadb.DefaultGHCRRepository},
+	// 	Usage:      "OCI repository(ies) to retrieve trivy-java-db in order of priority",
+	// }
 	LightFlag = Flag[bool]{
 		Name:       "light",
 		ConfigName: "db.light",
@@ -105,7 +104,7 @@ func NewDBFlagGroup() *DBFlagGroup {
 		Light:              LightFlag.Clone(),
 		NoProgress:         NoProgressFlag.Clone(),
 		DBRepositories:     DBRepositoryFlag.Clone(),
-		JavaDBRepositories: JavaDBRepositoryFlag.Clone(),
+		// JavaDBRepositories: JavaDBRepositoryFlag.Clone(),
 	}
 }
 
@@ -152,13 +151,13 @@ func (f *DBFlagGroup) ToOptions(opts *Options) error {
 		dbRepositories = append(dbRepositories, ref)
 	}
 
-	for _, repo := range f.JavaDBRepositories.Value() {
-		ref, err := parseRepository(repo, javadb.SchemaVersion)
-		if err != nil {
-			return xerrors.Errorf("invalid javadb repository: %w", err)
-		}
-		javaDBRepositories = append(javaDBRepositories, ref)
-	}
+	// for _, repo := range f.JavaDBRepositories.Value() {
+	// 	ref, err := parseRepository(repo, javadb.SchemaVersion)
+	// 	if err != nil {
+	// 		return xerrors.Errorf("invalid javadb repository: %w", err)
+	// 	}
+	// 	javaDBRepositories = append(javaDBRepositories, ref)
+	// }
 
 	opts.DBOptions = DBOptions{
 		Reset:              f.Reset.Value(),

@@ -18,7 +18,6 @@ import (
 	"github.com/aquasecurity/trivy/pkg/commands/auth"
 	"github.com/aquasecurity/trivy/pkg/commands/clean"
 	"github.com/aquasecurity/trivy/pkg/commands/convert"
-	"github.com/aquasecurity/trivy/pkg/commands/server"
 	"github.com/aquasecurity/trivy/pkg/fanal/analyzer"
 	"github.com/aquasecurity/trivy/pkg/flag"
 	k8scommands "github.com/aquasecurity/trivy/pkg/k8s/commands"
@@ -87,7 +86,6 @@ func NewApp() *cobra.Command {
 		NewRootfsCommand(globalFlags),
 		NewRepositoryCommand(globalFlags),
 		NewClientCommand(globalFlags),
-		NewServerCommand(globalFlags),
 		NewConfigCommand(globalFlags),
 		NewConvertCommand(globalFlags),
 		NewModuleCommand(globalFlags),
@@ -574,54 +572,6 @@ func NewClientCommand(globalFlags *flag.GlobalFlagGroup) *cobra.Command {
 	cmd.SetFlagErrorFunc(flagErrorFunc)
 	clientFlags.AddFlags(cmd)
 	cmd.SetUsageTemplate(fmt.Sprintf(usageTemplate, clientFlags.Usages(cmd)))
-
-	return cmd
-}
-
-func NewServerCommand(globalFlags *flag.GlobalFlagGroup) *cobra.Command {
-	// The Java DB is not needed for the server mode
-	dbFlagGroup := flag.NewDBFlagGroup()
-	dbFlagGroup.DownloadJavaDBOnly = nil // disable '--download-java-db-only'
-	dbFlagGroup.SkipJavaDBUpdate = nil   // disable '--skip-java-db-update'
-	dbFlagGroup.JavaDBRepositories = nil // disable '--java-db-repository'
-
-	serverFlags := flag.Flags{
-		globalFlags,
-		flag.NewCacheFlagGroup(),
-		dbFlagGroup,
-		flag.NewModuleFlagGroup(),
-		flag.NewServerFlags(),
-		flag.NewRegistryFlagGroup(),
-	}
-
-	cmd := &cobra.Command{
-		Use:     "server [flags]",
-		Aliases: []string{"s"},
-		GroupID: groupUtility,
-		Short:   "Server mode",
-		Example: `  # Run a server
-  $ trivy server
-
-  # Listen on 0.0.0.0:10000
-  $ trivy server --listen 0.0.0.0:10000
-`,
-		Args: cobra.ExactArgs(0),
-		RunE: func(cmd *cobra.Command, args []string) error {
-			if err := serverFlags.Bind(cmd); err != nil {
-				return xerrors.Errorf("flag bind error: %w", err)
-			}
-			options, err := serverFlags.ToOptions(args)
-			if err != nil {
-				return xerrors.Errorf("flag error: %w", err)
-			}
-			return server.Run(cmd.Context(), options)
-		},
-		SilenceErrors: true,
-		SilenceUsage:  true,
-	}
-	cmd.SetFlagErrorFunc(flagErrorFunc)
-	serverFlags.AddFlags(cmd)
-	cmd.SetUsageTemplate(fmt.Sprintf(usageTemplate, serverFlags.Usages(cmd)))
 
 	return cmd
 }

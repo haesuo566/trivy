@@ -27,7 +27,6 @@ import (
 	"github.com/aquasecurity/trivy/pkg/fanal/walker"
 	"github.com/aquasecurity/trivy/pkg/flag"
 	"github.com/aquasecurity/trivy/pkg/iac/rego"
-	"github.com/aquasecurity/trivy/pkg/javadb"
 	"github.com/aquasecurity/trivy/pkg/log"
 	"github.com/aquasecurity/trivy/pkg/misconf"
 	"github.com/aquasecurity/trivy/pkg/module"
@@ -35,7 +34,6 @@ import (
 	"github.com/aquasecurity/trivy/pkg/policy"
 	pkgReport "github.com/aquasecurity/trivy/pkg/report"
 	"github.com/aquasecurity/trivy/pkg/result"
-	"github.com/aquasecurity/trivy/pkg/rpc/client"
 	"github.com/aquasecurity/trivy/pkg/scan"
 	"github.com/aquasecurity/trivy/pkg/types"
 	"github.com/aquasecurity/trivy/pkg/version/doc"
@@ -66,11 +64,7 @@ type ScannerConfig struct {
 	Target string
 
 	// Cache
-	CacheOptions       cache.Options
-	RemoteCacheOptions cache.RemoteOptions
-
-	// Client/Server options
-	ServerOption client.ServiceOption
+	CacheOptions cache.Options
 
 	// Artifact options
 	ArtifactOption artifact.Option
@@ -142,11 +136,6 @@ func NewRunner(ctx context.Context, cliOptions flag.Options, targetKind TargetKi
 
 	r.versionChecker = notification.NewVersionChecker(string(targetKind), &cliOptions)
 
-	// Update the vulnerability database if needed.
-	if err := r.initDB(ctx, cliOptions); err != nil {
-		return nil, xerrors.Errorf("DB error: %w", err)
-	}
-
 	// Initialize WASM modules
 	m, err := module.NewManager(ctx, module.Options{
 		Dir:            cliOptions.ModuleDir,
@@ -200,15 +189,9 @@ func (r *runner) ScanImage(ctx context.Context, opts flag.Options) (types.Report
 	case opts.Input != "" && opts.ServerAddr == "":
 		// Scan image tarball in standalone mode
 		s = archiveStandaloneScanService
-	case opts.Input != "" && opts.ServerAddr != "":
-		// Scan image tarball in client/server mode
-		s = archiveRemoteScanService
 	case opts.Input == "" && opts.ServerAddr == "":
 		// Scan container image in standalone mode
 		s = imageStandaloneScanService
-	case opts.Input == "" && opts.ServerAddr != "":
-		// Scan container image in client/server mode
-		s = imageRemoteScanService
 	}
 
 	return r.scanArtifact(ctx, opts, s)
@@ -230,16 +213,7 @@ func (r *runner) ScanRootfs(ctx context.Context, opts flag.Options) (types.Repor
 }
 
 func (r *runner) scanFS(ctx context.Context, opts flag.Options) (types.Report, error) {
-	var s InitializeScanService
-	if opts.ServerAddr == "" {
-		// Scan filesystem in standalone mode
-		s = filesystemStandaloneScanService
-	} else {
-		// Scan filesystem in client/server mode
-		s = filesystemRemoteScanService
-	}
-
-	return r.scanArtifact(ctx, opts, s)
+	return r.scanArtifact(ctx, opts, filesystemStandaloneScanService)
 }
 
 func (r *runner) ScanRepository(ctx context.Context, opts flag.Options) (types.Report, error) {
@@ -250,44 +224,17 @@ func (r *runner) ScanRepository(ctx context.Context, opts flag.Options) (types.R
 	opts.DisabledAnalyzers = append(analyzer.TypeIndividualPkgs, analyzer.TypeOSes...)
 	opts.DisabledAnalyzers = append(opts.DisabledAnalyzers, analyzer.TypeSBOM)
 
-	var s InitializeScanService
-	if opts.ServerAddr == "" {
-		// Scan repository in standalone mode
-		s = repositoryStandaloneScanService
-	} else {
-		// Scan repository in client/server mode
-		s = repositoryRemoteScanService
-	}
-	return r.scanArtifact(ctx, opts, s)
+	return r.scanArtifact(ctx, opts, repositoryStandaloneScanService)
 }
 
 func (r *runner) ScanSBOM(ctx context.Context, opts flag.Options) (types.Report, error) {
-	var s InitializeScanService
-	if opts.ServerAddr == "" {
-		// Scan cycloneDX in standalone mode
-		s = sbomStandaloneScanService
-	} else {
-		// Scan cycloneDX in client/server mode
-		s = sbomRemoteScanService
-	}
-
-	return r.scanArtifact(ctx, opts, s)
+	return r.scanArtifact(ctx, opts, sbomStandaloneScanService)
 }
 
 func (r *runner) ScanVM(ctx context.Context, opts flag.Options) (types.Report, error) {
 	// TODO: Does VM scan disable lock file..?
 	opts.DisabledAnalyzers = analyzer.TypeLockfiles
-
-	var s InitializeScanService
-	if opts.ServerAddr == "" {
-		// Scan virtual machine in standalone mode
-		s = vmStandaloneScanService
-	} else {
-		// Scan virtual machine in client/server mode
-		s = vmRemoteScanService
-	}
-
-	return r.scanArtifact(ctx, opts, s)
+	return r.scanArtifact(ctx, opts, vmStandaloneScanService)
 }
 
 func (r *runner) scanArtifact(ctx context.Context, opts flag.Options, initializeService InitializeScanService) (types.Report, error) {
@@ -314,59 +261,6 @@ func (r *runner) Report(ctx context.Context, opts flag.Options, report types.Rep
 	if err := pkgReport.Write(ctx, report, opts); err != nil {
 		return xerrors.Errorf("unable to write results: %w", err)
 	}
-	return nil
-}
-
-func (r *runner) initDB(ctx context.Context, opts flag.Options) error {
-	if err := r.initJavaDB(opts); err != nil {
-		return err
-	}
-
-	// When scanning config files or running as client mode, it doesn't need to download the vulnerability database.
-	if opts.ServerAddr != "" || !opts.Scanners.Enabled(types.VulnerabilityScanner) {
-		return nil
-	}
-
-	// download the database file
-	noProgress := opts.Quiet || opts.NoProgress
-	if err := operation.DownloadDB(ctx, opts.AppVersion, opts.CacheDir, opts.DBRepositories, noProgress, opts.SkipDBUpdate, opts.RegistryOpts()); err != nil {
-		return err
-	}
-
-	if opts.DownloadDBOnly {
-		return SkipScan
-	}
-
-	if err := db.Init(db.Dir(opts.CacheDir)); err != nil {
-		return xerrors.Errorf("error in vulnerability DB initialize: %w", err)
-	}
-	r.dbOpen = true
-
-	return nil
-}
-
-func (r *runner) initJavaDB(opts flag.Options) error {
-	// When running as server mode, it doesn't need to download the Java database.
-	if opts.Listen != "" {
-		return nil
-	}
-
-	// If vulnerability scanning and SBOM generation are disabled, it doesn't need to download the Java database.
-	if !opts.Scanners.Enabled(types.VulnerabilityScanner) &&
-		!slices.Contains(types.SupportedSBOMFormats, opts.Format) {
-		return nil
-	}
-
-	// Update the Java DB
-	noProgress := opts.Quiet || opts.NoProgress
-	javadb.Init(opts.CacheDir, opts.JavaDBRepositories, opts.SkipJavaDBUpdate, noProgress, opts.RegistryOpts())
-	if opts.DownloadJavaDBOnly {
-		if err := javadb.Update(); err != nil {
-			return xerrors.Errorf("Java DB error: %w", err)
-		}
-		return SkipScan
-	}
-
 	return nil
 }
 
@@ -627,10 +521,8 @@ func (r *runner) initScannerConfig(ctx context.Context, opts flag.Options) (Scan
 		[]ftypes.HandlerType{ftypes.SystemFileFilteringPostHandler}, nil)
 
 	return ScannerConfig{
-		Target:             target,
-		CacheOptions:       opts.CacheOpts(),
-		RemoteCacheOptions: opts.RemoteCacheOpts(),
-		ServerOption:       opts.ClientScannerOpts(),
+		Target:       target,
+		CacheOptions: opts.CacheOpts(),
 		ArtifactOption: artifact.Option{
 			DisabledAnalyzers: disabledAnalyzers(opts),
 			DisabledHandlers:  disabledHandlers,

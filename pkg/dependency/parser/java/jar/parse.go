@@ -3,10 +3,7 @@ package jar
 import (
 	"archive/zip"
 	"bufio"
-	"context"
-	"crypto/sha1" // nolint:gosec
-	"encoding/hex"
-	"errors"
+	"context" // nolint:gosec
 	"io"
 	"os"
 	"path"
@@ -28,19 +25,10 @@ var (
 	jarFileRegEx = regexp.MustCompile(`^([a-zA-Z0-9\._-]*[^-*])-(\d\S*(?:-SNAPSHOT)?).jar$`)
 )
 
-type Client interface {
-	Exists(groupID, artifactID string) (bool, error)
-	SearchBySHA1(sha1 string) (Properties, error)
-	SearchByArtifactID(artifactID, version string) (string, error)
-}
-
 type Parser struct {
 	logger       *log.Logger
 	rootFilePath string
-	offline      bool
 	size         int64
-
-	client Client
 }
 
 type Option func(*Parser)
@@ -51,22 +39,15 @@ func WithFilePath(filePath string) Option {
 	}
 }
 
-func WithOffline(offline bool) Option {
-	return func(p *Parser) {
-		p.offline = offline
-	}
-}
-
 func WithSize(size int64) Option {
 	return func(p *Parser) {
 		p.size = size
 	}
 }
 
-func NewParser(c Client, opts ...Option) *Parser {
+func NewParser(opts ...Option) *Parser {
 	p := &Parser{
 		logger: log.WithPrefix("jar"),
-		client: c,
 	}
 
 	for _, opt := range opts {
@@ -103,51 +84,13 @@ func (p *Parser) parseArtifact(filePath string, size int64, r xio.ReadSeekerAt) 
 	}
 
 	manifestProps := m.properties(filePath)
-	if p.offline {
-		// In offline mode, we will not check if the artifact information is correct.
-		if !manifestProps.Valid() {
-			p.logger.Debug("Unable to identify POM in offline mode", log.String("file", fileName))
-			return pkgs, nil, nil
-		}
-		return append(pkgs, manifestProps.Package()), nil, nil
-	}
-
-	if manifestProps.Valid() {
-		// Even if MANIFEST.MF is found, the groupId and artifactId might not be valid.
-		// We have to make sure that the artifact exists actually.
-		if ok, _ := p.client.Exists(manifestProps.GroupID, manifestProps.ArtifactID); ok {
-			// If groupId and artifactId are valid, they will be returned.
-			return append(pkgs, manifestProps.Package()), nil, nil
-		}
-	}
-
-	// If groupId and artifactId are not found, call Maven Central's search API with SHA-1 digest.
-	props, err := p.searchBySHA1(r, filePath)
-	if err == nil {
-		return append(pkgs, props.Package()), nil, nil
-	} else if !errors.Is(err, ArtifactNotFoundErr) {
-		return nil, nil, xerrors.Errorf("failed to search by SHA1: %w", err)
-	}
-
-	p.logger.Debug("No such POM in the central repositories", log.String("file", fileName))
-
-	// Return when artifactId or version from the file name are empty
-	if fileProps.ArtifactID == "" || fileProps.Version == "" {
+	// In offline mode, we will not check if the artifact information is correct.
+	if !manifestProps.Valid() {
+		p.logger.Debug("Unable to identify POM in offline mode", log.String("file", fileName))
 		return pkgs, nil, nil
 	}
 
-	// Try to search groupId by artifactId via sonatype API
-	// When some artifacts have the same groupIds, it might result in false detection.
-	fileProps.GroupID, err = p.client.SearchByArtifactID(fileProps.ArtifactID, fileProps.Version)
-	if err == nil {
-		p.logger.Debug("POM was determined in a heuristic way", log.String("file", fileName),
-			log.String("artifact", fileProps.String()))
-		pkgs = append(pkgs, fileProps.Package())
-	} else if !errors.Is(err, ArtifactNotFoundErr) {
-		return nil, nil, xerrors.Errorf("failed to search by artifact id: %w", err)
-	}
-
-	return pkgs, nil, nil
+	return append(pkgs, manifestProps.Package()), nil, nil
 }
 
 func (p *Parser) traverseZip(filePath string, size int64, r xio.ReadSeekerAt, fileProps Properties) (
@@ -229,24 +172,6 @@ func (p *Parser) parseInnerJar(zf *zip.File, rootPath string) ([]ftypes.Package,
 	}
 
 	return innerPkgs, innerDeps, nil
-}
-
-func (p *Parser) searchBySHA1(r io.ReadSeeker, filePath string) (Properties, error) {
-	if _, err := r.Seek(0, io.SeekStart); err != nil {
-		return Properties{}, xerrors.Errorf("file seek error: %w", err)
-	}
-
-	h := sha1.New() // nolint:gosec
-	if _, err := io.Copy(h, r); err != nil {
-		return Properties{}, xerrors.Errorf("unable to calculate SHA-1: %w", err)
-	}
-	s := hex.EncodeToString(h.Sum(nil))
-	prop, err := p.client.SearchBySHA1(s)
-	if err != nil {
-		return Properties{}, err
-	}
-	prop.FilePath = filePath
-	return prop, nil
 }
 
 func isArtifact(name string) bool {

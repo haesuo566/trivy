@@ -23,7 +23,6 @@ import (
 	ftypes "github.com/aquasecurity/trivy/pkg/fanal/types"
 	"github.com/aquasecurity/trivy/pkg/log"
 	"github.com/aquasecurity/trivy/pkg/result"
-	"github.com/aquasecurity/trivy/pkg/rpc/client"
 	"github.com/aquasecurity/trivy/pkg/types"
 	"github.com/aquasecurity/trivy/pkg/version/app"
 )
@@ -544,30 +543,9 @@ func (o *Options) FilterOpts() result.FilterOptions {
 // CacheOpts returns options for scan cache
 func (o *Options) CacheOpts() cache.Options {
 	return cache.Options{
-		Backend:     o.CacheBackend,
-		CacheDir:    o.CacheDir,
-		RedisCACert: o.RedisCACert,
-		RedisCert:   o.RedisCert,
-		RedisKey:    o.RedisKey,
-		RedisTLS:    o.RedisTLS,
-		TTL:         o.CacheTTL,
-	}
-}
-
-// RemoteCacheOpts returns options for remote scan cache
-func (o *Options) RemoteCacheOpts() cache.RemoteOptions {
-	return cache.RemoteOptions{
-		ServerAddr:    o.ServerAddr,
-		CustomHeaders: o.CustomHeaders,
-		PathPrefix:    o.PathPrefix,
-	}
-}
-
-func (o *Options) ClientScannerOpts() client.ServiceOption {
-	return client.ServiceOption{
-		RemoteURL:     o.ServerAddr,
-		CustomHeaders: o.CustomHeaders,
-		PathPrefix:    o.PathPrefix,
+		Backend:  o.CacheBackend,
+		CacheDir: o.CacheDir,
+		TTL:      o.CacheTTL,
 	}
 }
 

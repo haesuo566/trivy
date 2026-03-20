@@ -6,7 +6,6 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/google/go-containerregistry/pkg/name"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/sync/errgroup"
@@ -15,7 +14,6 @@ import (
 
 	"github.com/aquasecurity/trivy/pkg/fanal/analyzer"
 	"github.com/aquasecurity/trivy/pkg/fanal/types"
-	"github.com/aquasecurity/trivy/pkg/javadb"
 	"github.com/aquasecurity/trivy/pkg/mapfs"
 	xio "github.com/aquasecurity/trivy/pkg/x/io"
 
@@ -714,13 +712,6 @@ func TestAnalyzerGroup_PostAnalyze(t *testing.T) {
 			mfs := mapfs.New()
 			require.NoError(t, mfs.CopyFilesUnder(tt.dir))
 			composite.Set(tt.analyzerType, mfs)
-
-			if tt.analyzerType == analyzer.TypeJar {
-				// init java-trivy-db with skip update
-				repo, err := name.NewTag(javadb.DefaultGHCRRepository)
-				require.NoError(t, err)
-				javadb.Init("./language/java/jar/testdata", []name.Reference{repo}, true, false, types.RegistryOptions{Insecure: false})
-			}
 
 			ctx := t.Context()
 			got := new(analyzer.AnalysisResult)

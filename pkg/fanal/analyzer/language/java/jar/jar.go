@@ -13,7 +13,6 @@ import (
 	"github.com/aquasecurity/trivy/pkg/fanal/analyzer"
 	"github.com/aquasecurity/trivy/pkg/fanal/analyzer/language"
 	"github.com/aquasecurity/trivy/pkg/fanal/types"
-	"github.com/aquasecurity/trivy/pkg/javadb"
 	"github.com/aquasecurity/trivy/pkg/parallel"
 	xio "github.com/aquasecurity/trivy/pkg/x/io"
 )
@@ -43,21 +42,9 @@ func newJavaLibraryAnalyzer(options analyzer.AnalyzerOptions) (analyzer.PostAnal
 }
 
 func (a *javaLibraryAnalyzer) PostAnalyze(ctx context.Context, input analyzer.PostAnalysisInput) (*analyzer.AnalysisResult, error) {
-	// TODO: think about the sonatype API and "--offline"
-	client, err := javadb.NewClient()
-	if err != nil {
-		return nil, xerrors.Errorf("Unable to initialize the Java DB: %s", err)
-	}
-	defer func() { _ = client.Close() }()
-
-	// Skip analyzing JAR files as the nil client means the Java DB was not downloaded successfully.
-	if client == nil {
-		return nil, nil
-	}
-
 	// It will be called on each JAR file
 	onFile := func(path string, info fs.FileInfo, r xio.ReadSeekerAt) (*types.Application, error) {
-		p := jar.NewParser(client, jar.WithSize(info.Size()), jar.WithFilePath(path))
+		p := jar.NewParser(jar.WithSize(info.Size()), jar.WithFilePath(path))
 		return language.ParsePackage(ctx, types.Jar, path, r, p, input.Options.FileChecksum)
 	}
 
@@ -70,7 +57,7 @@ func (a *javaLibraryAnalyzer) PostAnalyze(ctx context.Context, input analyzer.Po
 		return nil
 	}
 
-	if err = parallel.WalkDir(ctx, input.FS, ".", a.parallel, onFile, onResult); err != nil {
+	if err := parallel.WalkDir(ctx, input.FS, ".", a.parallel, onFile, onResult); err != nil {
 		return nil, xerrors.Errorf("walk dir error: %w", err)
 	}
 

@@ -5,10 +5,8 @@ import (
 
 	"golang.org/x/xerrors"
 
-	"github.com/aquasecurity/trivy/pkg/cache"
 	"github.com/aquasecurity/trivy/pkg/db"
 	"github.com/aquasecurity/trivy/pkg/flag"
-	"github.com/aquasecurity/trivy/pkg/javadb"
 	"github.com/aquasecurity/trivy/pkg/log"
 	"github.com/aquasecurity/trivy/pkg/policy"
 )
@@ -29,21 +27,9 @@ func Run(ctx context.Context, opts flag.Options) error {
 		opts.CleanChecksBundle = true
 	}
 
-	if opts.CleanScanCache {
-		if err := cleanScanCache(ctx, opts); err != nil {
-			return xerrors.Errorf("failed to remove scan cache : %w", err)
-		}
-	}
-
 	if opts.CleanVulnerabilityDB {
 		if err := cleanVulnerabilityDB(ctx, opts); err != nil {
 			return xerrors.Errorf("vuln db clean error: %w", err)
-		}
-	}
-
-	if opts.CleanJavaDB {
-		if err := cleanJavaDB(ctx, opts); err != nil {
-			return xerrors.Errorf("java db clean error: %w", err)
 		}
 	}
 
@@ -56,33 +42,11 @@ func Run(ctx context.Context, opts flag.Options) error {
 	return nil
 }
 
-func cleanScanCache(ctx context.Context, opts flag.Options) error {
-	log.InfoContext(ctx, "Removing scan cache...")
-	c, cleanup, err := cache.New(opts.CacheOpts())
-	if err != nil {
-		return xerrors.Errorf("failed to instantiate cache client: %w", err)
-	}
-	defer cleanup()
-
-	if err = c.Clear(ctx); err != nil {
-		return xerrors.Errorf("clear scan cache: %w", err)
-	}
-	return nil
-}
-
 func cleanVulnerabilityDB(ctx context.Context, opts flag.Options) error {
 	log.InfoContext(ctx, "Removing vulnerability database...")
 	if err := db.NewClient(db.Dir(opts.CacheDir), true).Clear(ctx); err != nil {
 		return xerrors.Errorf("clear vulnerability database: %w", err)
 
-	}
-	return nil
-}
-
-func cleanJavaDB(ctx context.Context, opts flag.Options) error {
-	log.InfoContext(ctx, "Removing Java database...")
-	if err := javadb.Clear(ctx, opts.CacheDir); err != nil {
-		return xerrors.Errorf("clear Java database: %w", err)
 	}
 	return nil
 }
@@ -98,4 +62,3 @@ func cleanCheckBundle(opts flag.Options) error {
 	}
 	return nil
 }
-

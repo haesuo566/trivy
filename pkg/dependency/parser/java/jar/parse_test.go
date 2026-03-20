@@ -1,19 +1,14 @@
 package jar_test
 
 import (
-	"encoding/json"
-	"net/http"
-	"net/http/httptest"
 	"os"
 	"sort"
-	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/aquasecurity/trivy/pkg/dependency/parser/java/jar"
-	"github.com/aquasecurity/trivy/pkg/dependency/parser/java/jar/sonatype"
 	ftypes "github.com/aquasecurity/trivy/pkg/fanal/types"
 )
 
@@ -288,55 +283,6 @@ func TestParse(t *testing.T) {
 		},
 	}
 
-	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		res := apiResponse{
-			Response: response{
-				NumFound: 1,
-			},
-		}
-
-		switch {
-		case strings.Contains(r.URL.Query().Get("q"), "springframework"):
-			res.Response.NumFound = 0
-		case strings.Contains(r.URL.Query().Get("q"), "c666f5bc47eb64ed3bbd13505a26f58be71f33f0"):
-			res.Response.Docs = []doc{
-				{
-					ID:         "org.springframework.spring-core",
-					GroupID:    "org.springframework",
-					ArtifactID: "spring-core",
-					Version:    "5.3.3",
-				},
-			}
-		case strings.Contains(r.URL.Query().Get("q"), "Gizmo"):
-			res.Response.NumFound = 0
-		case strings.Contains(r.URL.Query().Get("q"), "1c78bbc4d8c58b9af8eee82b84f2c26ec48e9a2b"):
-			res.Response.Docs = []doc{
-				{
-					ID:         "io.quarkus.gizmo.gizmo",
-					GroupID:    "io.quarkus.gizmo",
-					ArtifactID: "gizmo",
-					Version:    "1.1.0",
-				},
-			}
-		case strings.Contains(r.URL.Query().Get("q"), "heuristic"):
-			res.Response.Docs = []doc{
-				{
-					ID:           "org.springframework.heuristic",
-					GroupID:      "org.springframework",
-					ArtifactID:   "heuristic",
-					VersionCount: 10,
-				},
-				{
-					ID:           "com.example.heuristic",
-					GroupID:      "com.example",
-					ArtifactID:   "heuristic",
-					VersionCount: 100,
-				},
-			}
-		}
-		_ = json.NewEncoder(w).Encode(res)
-	}))
-
 	for _, v := range vectors {
 		t.Run(v.name, func(t *testing.T) {
 			f, err := os.Open(v.file)
@@ -345,8 +291,7 @@ func TestParse(t *testing.T) {
 			stat, err := f.Stat()
 			require.NoError(t, err)
 
-			c := sonatype.New(sonatype.WithURL(ts.URL), sonatype.WithHTTPClient(ts.Client()))
-			p := jar.NewParser(c, jar.WithFilePath(v.file), jar.WithOffline(v.offline), jar.WithSize(stat.Size()))
+			p := jar.NewParser(jar.WithFilePath(v.file), jar.WithSize(stat.Size()))
 
 			got, _, err := p.Parse(t.Context(), f)
 			require.NoError(t, err)

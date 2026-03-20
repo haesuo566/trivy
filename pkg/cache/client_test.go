@@ -25,13 +25,6 @@ func TestNew(t *testing.T) {
 			wantType: cache.FSCache{},
 		},
 		{
-			name: "redis backend",
-			opts: cache.Options{
-				Backend: "redis://localhost:6379",
-			},
-			wantType: cache.RedisCache{},
-		},
-		{
 			name: "unknown backend",
 			opts: cache.Options{
 				Backend: "unknown",
@@ -44,26 +37,6 @@ func TestNew(t *testing.T) {
 				Backend: "redis://invalid-url:foo/bar",
 			},
 			wantErr: "failed to parse Redis URL",
-		},
-		{
-			name: "incomplete TLS options",
-			opts: cache.Options{
-				Backend:     "redis://localhost:6379",
-				RedisCACert: "testdata/ca-cert.pem",
-				RedisTLS:    true,
-			},
-			wantErr: "you must provide Redis CA, cert and key file path when using TLS",
-		},
-		{
-			name: "invalid TLS file paths",
-			opts: cache.Options{
-				Backend:     "redis://localhost:6379",
-				RedisCACert: "testdata/non-existent-ca-cert.pem",
-				RedisCert:   "testdata/non-existent-cert.pem",
-				RedisKey:    "testdata/non-existent-key.pem",
-				RedisTLS:    true,
-			},
-			wantErr: "failed to get TLS config",
 		},
 	}
 
@@ -90,11 +63,6 @@ func TestNewType(t *testing.T) {
 		backend  string
 		wantType cache.Type
 	}{
-		{
-			name:     "redis backend",
-			backend:  "redis://localhost:6379",
-			wantType: cache.TypeRedis,
-		},
 		{
 			name:     "fs backend",
 			backend:  "fs",
