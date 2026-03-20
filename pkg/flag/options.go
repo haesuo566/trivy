@@ -22,7 +22,6 @@ import (
 	"github.com/aquasecurity/trivy/pkg/fanal/analyzer"
 	ftypes "github.com/aquasecurity/trivy/pkg/fanal/types"
 	"github.com/aquasecurity/trivy/pkg/log"
-	"github.com/aquasecurity/trivy/pkg/plugin"
 	"github.com/aquasecurity/trivy/pkg/result"
 	"github.com/aquasecurity/trivy/pkg/rpc/client"
 	"github.com/aquasecurity/trivy/pkg/types"
@@ -590,8 +589,6 @@ func (o *Options) OutputWriter(ctx context.Context) (io.Writer, func() error, er
 		return o.outputWriter, cleanup, nil
 	case o.Output == "":
 		return os.Stdout, cleanup, nil
-	case strings.HasPrefix(o.Output, "plugin="):
-		return o.outputPluginWriter(ctx)
 	}
 
 	f, err := os.Create(o.Output)
@@ -604,43 +601,6 @@ func (o *Options) OutputWriter(ctx context.Context) (io.Writer, func() error, er
 // GetUsedFlags returns the explicitly set flags for the options.
 func (o *Options) GetUsedFlags() []Flagger {
 	return o.usedFlags
-}
-
-func (o *Options) outputPluginWriter(ctx context.Context) (writer io.Writer, cleanup func() error, err error) {
-	pluginName := strings.TrimPrefix(o.Output, "plugin=")
-
-	pr, pw := io.Pipe()
-
-	// Close pipes on error
-	defer func() {
-		if err != nil {
-			if pr != nil {
-				pr.Close()
-			}
-			if pw != nil {
-				pw.Close()
-			}
-		}
-	}()
-
-	wait, err := plugin.Start(ctx, pluginName, plugin.Options{
-		Args:  o.OutputPluginArgs,
-		Stdin: pr,
-	})
-	if err != nil {
-		return nil, nil, xerrors.Errorf("plugin start: %w", err)
-	}
-
-	cleanup = func() error {
-		if err = pw.Close(); err != nil {
-			return xerrors.Errorf("failed to close pipe: %w", err)
-		}
-		if err = wait(); err != nil {
-			return xerrors.Errorf("plugin error: %w", err)
-		}
-		return nil
-	}
-	return pw, cleanup, nil
 }
 
 // groups returns all the flag groups other than global flags

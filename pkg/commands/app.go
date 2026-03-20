@@ -1,7 +1,6 @@
 package commands
 
 import (
-	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -25,7 +24,6 @@ import (
 	k8scommands "github.com/aquasecurity/trivy/pkg/k8s/commands"
 	"github.com/aquasecurity/trivy/pkg/log"
 	"github.com/aquasecurity/trivy/pkg/module"
-	"github.com/aquasecurity/trivy/pkg/plugin"
 	"github.com/aquasecurity/trivy/pkg/types"
 	"github.com/aquasecurity/trivy/pkg/version"
 	"github.com/aquasecurity/trivy/pkg/version/app"
@@ -61,7 +59,6 @@ Use "{{.CommandPath}} [command] --help" for more information about a command.{{e
 	groupScanning   = "scanning"
 	groupManagement = "management"
 	groupUtility    = "utility"
-	groupPlugin     = "plugin"
 )
 
 // NewApp is the factory method to return Trivy CLI
@@ -94,7 +91,6 @@ func NewApp() *cobra.Command {
 		NewServerCommand(globalFlags),
 		NewConfigCommand(globalFlags),
 		NewConvertCommand(globalFlags),
-		NewPluginCommand(globalFlags),
 		NewModuleCommand(globalFlags),
 		NewKubernetesCommand(globalFlags),
 		NewSBOMCommand(globalFlags),
@@ -105,45 +101,7 @@ func NewApp() *cobra.Command {
 		NewVEXCommand(globalFlags),
 	)
 
-	if plugins := loadPluginCommands(); len(plugins) > 0 {
-		rootCmd.AddGroup(&cobra.Group{
-			ID:    groupPlugin,
-			Title: "Plugin Commands",
-		})
-		rootCmd.AddCommand(plugins...)
-	}
-
 	return rootCmd
-}
-
-func loadPluginCommands() []*cobra.Command {
-	ctx := context.Background()
-
-	var commands []*cobra.Command
-	plugins, err := plugin.NewManager().LoadAll(ctx)
-	if err != nil {
-		log.DebugContext(ctx, "No plugins loaded")
-		return nil
-	}
-	for _, p := range plugins {
-		cmd := &cobra.Command{
-			Use:     fmt.Sprintf("%s [flags]", p.Name),
-			Short:   p.Summary,
-			Long:    p.Description,
-			GroupID: groupPlugin,
-			RunE: func(cmd *cobra.Command, args []string) error {
-				if err = p.Run(cmd.Context(), plugin.Options{Args: args}); err != nil {
-					return xerrors.Errorf("plugin error: %w", err)
-				}
-				return nil
-			},
-			DisableFlagParsing: true,
-			SilenceUsage:       true,
-			SilenceErrors:      true,
-		}
-		commands = append(commands, cmd)
-	}
-	return commands
 }
 
 func initConfig(configFile string, pathChanged bool) error {
@@ -746,157 +704,6 @@ func NewConfigCommand(globalFlags *flag.GlobalFlagGroup) *cobra.Command {
 	configFlags.AddFlags(cmd)
 	cmd.SetUsageTemplate(fmt.Sprintf(usageTemplate, configFlags.Usages(cmd)))
 
-	return cmd
-}
-
-func NewPluginCommand(globalFlags *flag.GlobalFlagGroup) *cobra.Command {
-	var pluginOptions flag.Options
-	pluginFlags := &flag.Flags{
-		globalFlags,
-	}
-	cmd := &cobra.Command{
-		Use:           "plugin subcommand",
-		Aliases:       []string{"p"},
-		GroupID:       groupManagement,
-		Short:         "Manage plugins",
-		SilenceErrors: true,
-		SilenceUsage:  true,
-		PersistentPreRunE: func(_ *cobra.Command, args []string) error {
-			var err error
-			pluginOptions, err = pluginFlags.ToOptions(args)
-			if err != nil {
-				return err
-			}
-			return nil
-		},
-	}
-	cmd.AddCommand(
-		&cobra.Command{
-			Use:     "install NAME | URL | FILE_PATH",
-			Aliases: []string{"i"},
-			Short:   "Install a plugin",
-			Example: `  # Install a plugin from the plugin index
-  $ trivy plugin install referrer
-
-  # Specify the version of the plugin to install
-  $ trivy plugin install referrer@v0.3.0
-
-  # Install a plugin from a URL
-  $ trivy plugin install github.com/aquasecurity/trivy-plugin-referrer`,
-			SilenceErrors:         true,
-			SilenceUsage:          true,
-			DisableFlagsInUseLine: true,
-			Args:                  cobra.ExactArgs(1),
-			RunE: func(cmd *cobra.Command, args []string) error {
-				if _, err := plugin.Install(cmd.Context(), args[0], plugin.Options{Insecure: pluginOptions.Insecure}); err != nil {
-					return xerrors.Errorf("plugin install error: %w", err)
-				}
-				return nil
-			},
-		},
-		&cobra.Command{
-			Use:                   "uninstall PLUGIN_NAME",
-			Aliases:               []string{"u"},
-			DisableFlagsInUseLine: true,
-			Short:                 "Uninstall a plugin",
-			SilenceErrors:         true,
-			SilenceUsage:          true,
-			Args:                  cobra.ExactArgs(1),
-			RunE: func(cmd *cobra.Command, args []string) error {
-				if err := plugin.Uninstall(cmd.Context(), args[0]); err != nil {
-					return xerrors.Errorf("plugin uninstall error: %w", err)
-				}
-				return nil
-			},
-		},
-		&cobra.Command{
-			Use:                   "list",
-			Aliases:               []string{"l"},
-			DisableFlagsInUseLine: true,
-			SilenceErrors:         true,
-			SilenceUsage:          true,
-			Short:                 "List installed plugin",
-			Args:                  cobra.NoArgs,
-			RunE: func(cmd *cobra.Command, _ []string) error {
-				if err := plugin.List(cmd.Context()); err != nil {
-					return xerrors.Errorf("plugin list display error: %w", err)
-				}
-				return nil
-			},
-		},
-		&cobra.Command{
-			Use:                   "info PLUGIN_NAME",
-			Short:                 "Show information about the specified plugin",
-			DisableFlagsInUseLine: true,
-			SilenceErrors:         true,
-			SilenceUsage:          true,
-			Args:                  cobra.ExactArgs(1),
-			RunE: func(_ *cobra.Command, args []string) error {
-				if err := plugin.Information(args[0]); err != nil {
-					return xerrors.Errorf("plugin information display error: %w", err)
-				}
-				return nil
-			},
-		},
-		&cobra.Command{
-			Use:                   "run NAME | URL | FILE_PATH",
-			Aliases:               []string{"r"},
-			DisableFlagsInUseLine: true,
-			SilenceErrors:         true,
-			SilenceUsage:          true,
-			Short:                 "Run a plugin on the fly",
-			Args:                  cobra.MinimumNArgs(1),
-			RunE: func(cmd *cobra.Command, args []string) error {
-				return plugin.Run(cmd.Context(), args[0], plugin.Options{
-					Args:     args[1:],
-					Insecure: pluginOptions.Insecure,
-				})
-			},
-		},
-		&cobra.Command{
-			Use:                   "update",
-			Short:                 "Update the local copy of the plugin index",
-			DisableFlagsInUseLine: true,
-			SilenceErrors:         true,
-			SilenceUsage:          true,
-			Args:                  cobra.NoArgs,
-			RunE: func(cmd *cobra.Command, _ []string) error {
-				if err := plugin.Update(cmd.Context(), plugin.Options{Insecure: pluginOptions.Insecure}); err != nil {
-					return xerrors.Errorf("plugin update error: %w", err)
-				}
-				return nil
-			},
-		},
-		&cobra.Command{
-			Use:                   "search [KEYWORD]",
-			DisableFlagsInUseLine: true,
-			SilenceErrors:         true,
-			SilenceUsage:          true,
-			Short:                 "List Trivy plugins available on the plugin index and search among them",
-			Args:                  cobra.MaximumNArgs(1),
-			RunE: func(cmd *cobra.Command, args []string) error {
-				var keyword string
-				if len(args) == 1 {
-					keyword = args[0]
-				}
-				return plugin.Search(cmd.Context(), keyword)
-			},
-		},
-		&cobra.Command{
-			Use:                   "upgrade [PLUGIN_NAMES]",
-			Short:                 "Upgrade installed plugins to newer versions",
-			DisableFlagsInUseLine: true,
-			SilenceErrors:         true,
-			SilenceUsage:          true,
-			RunE: func(cmd *cobra.Command, args []string) error {
-				if err := plugin.Upgrade(cmd.Context(), args); err != nil {
-					return xerrors.Errorf("plugin upgrade error: %w", err)
-				}
-				return nil
-			},
-		},
-	)
-	cmd.SetFlagErrorFunc(flagErrorFunc)
 	return cmd
 }
 

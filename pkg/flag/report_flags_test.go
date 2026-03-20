@@ -27,9 +27,8 @@ func TestReportFlagGroup_ToOptions(t *testing.T) {
 		exitCode         int
 		exitOnEOSL       bool
 		ignorePolicy     string
-		output           string
-		outputPluginArgs string
-		severities       string
+		output     string
+		severities string
 		compliance       string
 		debug            bool
 		pkgTypes         string
@@ -116,22 +115,6 @@ func TestReportFlagGroup_ToOptions(t *testing.T) {
 				Format:      "table",
 				Severities:  []dbTypes.Severity{dbTypes.SeverityLow},
 				ListAllPkgs: true,
-			},
-		},
-		{
-			name: "happy path with output plugin args",
-			fields: fields{
-				output:           "plugin=count",
-				outputPluginArgs: "--publish-after 2023-10-01 --publish-before 2023-10-02",
-			},
-			want: flag.ReportOptions{
-				Output: "plugin=count",
-				OutputPluginArgs: []string{
-					"--publish-after",
-					"2023-10-01",
-					"--publish-before",
-					"2023-10-02",
-				},
 			},
 		},
 		{
@@ -234,7 +217,6 @@ func TestReportFlagGroup_ToOptions(t *testing.T) {
 			setValue(flag.ExitCodeFlag.ConfigName, tt.fields.exitCode)
 			setValue(flag.ExitOnEOLFlag.ConfigName, tt.fields.exitOnEOSL)
 			setValue(flag.OutputFlag.ConfigName, tt.fields.output)
-			setValue(flag.OutputPluginArgFlag.ConfigName, tt.fields.outputPluginArgs)
 			setValue(flag.SeverityFlag.ConfigName, tt.fields.severities)
 			setValue(flag.ComplianceFlag.ConfigName, tt.fields.compliance)
 			setSliceValue(flag.TableModeFlag.ConfigName, tt.fields.tableModes)
@@ -250,7 +232,6 @@ func TestReportFlagGroup_ToOptions(t *testing.T) {
 				ExitCode:        flag.ExitCodeFlag.Clone(),
 				ExitOnEOL:       flag.ExitOnEOLFlag.Clone(),
 				Output:          flag.OutputFlag.Clone(),
-				OutputPluginArg: flag.OutputPluginArgFlag.Clone(),
 				Severity:        flag.SeverityFlag.Clone(),
 				Compliance:      flag.ComplianceFlag.Clone(),
 				TableMode:       flag.TableModeFlag.Clone(),

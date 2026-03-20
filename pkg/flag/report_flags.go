@@ -5,7 +5,6 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/mattn/go-shellwords"
 	"github.com/spf13/viper"
 	"golang.org/x/xerrors"
 
@@ -94,11 +93,6 @@ var (
 		Shorthand:  "o",
 		Usage:      "output file name",
 	}
-	OutputPluginArgFlag = Flag[string]{
-		Name:       "output-plugin-arg",
-		ConfigName: "output-plugin-arg",
-		Usage:      "[EXPERIMENTAL] output plugin arguments",
-	}
 	SeverityFlag = Flag[[]string]{
 		Name:          "severity",
 		ConfigName:    "severity",
@@ -141,7 +135,6 @@ type ReportFlagGroup struct {
 	ExitCode        *Flag[int]
 	ExitOnEOL       *Flag[int]
 	Output          *Flag[string]
-	OutputPluginArg *Flag[string]
 	Severity        *Flag[[]string]
 	Compliance      *Flag[string]
 	ShowSuppressed  *Flag[bool]
@@ -159,7 +152,6 @@ type ReportOptions struct {
 	ExitOnEOL        int
 	IgnorePolicy     string
 	Output           string
-	OutputPluginArgs []string
 	Severities       []dbTypes.Severity
 	Compliance       spec.ComplianceSpec
 	ShowSuppressed   bool
@@ -178,7 +170,6 @@ func NewReportFlagGroup() *ReportFlagGroup {
 		ExitCode:        ExitCodeFlag.Clone(),
 		ExitOnEOL:       ExitOnEOLFlag.Clone(),
 		Output:          OutputFlag.Clone(),
-		OutputPluginArg: OutputPluginArgFlag.Clone(),
 		Severity:        SeverityFlag.Clone(),
 		Compliance:      ComplianceFlag.Clone(),
 		ShowSuppressed:  ShowSuppressedFlag.Clone(),
@@ -202,7 +193,6 @@ func (f *ReportFlagGroup) Flags() []Flagger {
 		f.ExitCode,
 		f.ExitOnEOL,
 		f.Output,
-		f.OutputPluginArg,
 		f.Severity,
 		f.Compliance,
 		f.ShowSuppressed,
@@ -262,14 +252,6 @@ func (f *ReportFlagGroup) ToOptions(opts *Options) error {
 		return xerrors.Errorf("unable to load compliance spec: %w", err)
 	}
 
-	var outputPluginArgs []string
-	if arg := f.OutputPluginArg.Value(); arg != "" {
-		outputPluginArgs, err = shellwords.Parse(arg)
-		if err != nil {
-			return xerrors.Errorf("unable to parse output plugin argument: %w", err)
-		}
-	}
-
 	if viper.IsSet(f.IgnoreFile.ConfigName) && !fsutils.FileExists(f.IgnoreFile.Value()) {
 		return xerrors.Errorf("ignore file not found: %s", f.IgnoreFile.Value())
 	}
@@ -285,7 +267,6 @@ func (f *ReportFlagGroup) ToOptions(opts *Options) error {
 		ExitOnEOL:        f.ExitOnEOL.Value(),
 		IgnorePolicy:     f.IgnorePolicy.Value(),
 		Output:           f.Output.Value(),
-		OutputPluginArgs: outputPluginArgs,
 		Severities:       toSeverity(f.Severity.Value()),
 		Compliance:       cs,
 		ShowSuppressed:   f.ShowSuppressed.Value(),
