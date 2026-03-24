@@ -177,10 +177,10 @@ func (r *runner) ScanImage(ctx context.Context, opts flag.Options) (types.Report
 
 	var s InitializeScanService
 	switch {
-	case opts.Input != "" && opts.ServerAddr == "":
+	case opts.Input != "":
 		// Scan image tarball in standalone mode
 		s = archiveStandaloneScanService
-	case opts.Input == "" && opts.ServerAddr == "":
+	default:
 		// Scan container image in standalone mode
 		s = imageStandaloneScanService
 	}
@@ -348,16 +348,6 @@ func run(ctx context.Context, opts flag.Options, targetKind TargetKind) (types.R
 
 // checkOptions performs various checks on scan options and shows warnings
 func checkOptions(ctx context.Context, opts flag.Options, targetKind TargetKind) {
-	// Check client/server mode with misconfiguration and secret scanning
-	if opts.ServerAddr != "" && opts.Scanners.AnyEnabled(types.MisconfigScanner, types.SecretScanner) {
-		log.WarnContext(ctx,
-			fmt.Sprintf(
-				"Trivy runs in client/server mode, but misconfiguration and secret scanning will be done on the client side, see %s",
-				doc.URL("guide/references/modes/client-server", ""),
-			),
-		)
-	}
-
 	// Check SBOM to SBOM scanning with package filtering flags
 	// For SBOM-to-SBOM scanning (for example, to add vulnerabilities to the SBOM file), we should not modify the scanned file.
 	// cf. https://github.com/aquasecurity/trivy/pull/9439#issuecomment-3295533665

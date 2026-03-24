@@ -413,7 +413,6 @@ type Options struct {
 	PackageOptions
 	RegistryOptions
 	RegoOptions
-	RemoteOptions
 	RepoOptions
 	ReportOptions
 	ScanOptions
@@ -710,7 +709,6 @@ func HiddenFlags() []string {
 		NewGlobalFlagGroup(),
 		NewCacheFlagGroup(),
 		NewCleanFlagGroup(),
-		NewClientFlags(),
 		NewDBFlagGroup(),
 		NewImageFlagGroup(),
 		NewK8sFlagGroup(),
@@ -724,7 +722,6 @@ func HiddenFlags() []string {
 		NewRepoFlagGroup(),
 		NewScanFlagGroup(),
 		NewSecretFlagGroup(),
-		NewServerFlags(),
 	}
 
 	var hiddenFlags []string

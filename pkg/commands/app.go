@@ -86,7 +86,6 @@ func NewApp() *cobra.Command {
 		NewFilesystemCommand(globalFlags),
 		NewRootfsCommand(globalFlags),
 		NewRepositoryCommand(globalFlags),
-		NewClientCommand(globalFlags),
 		NewConfigCommand(globalFlags),
 		NewConvertCommand(globalFlags),
 		NewModuleCommand(globalFlags),
@@ -217,7 +216,6 @@ func NewImageCommand(globalFlags *flag.GlobalFlagGroup) *cobra.Command {
 		misconfFlagGroup,
 		flag.NewModuleFlagGroup(),
 		packageFlagGroup,
-		flag.NewClientFlags(),
 		flag.NewRegistryFlagGroup(),
 		flag.NewRegoFlagGroup(),
 		reportFlagGroup,
@@ -298,7 +296,6 @@ func NewFilesystemCommand(globalFlags *flag.GlobalFlagGroup) *cobra.Command {
 		flag.NewMisconfFlagGroup(),
 		flag.NewModuleFlagGroup(),
 		flag.NewPackageFlagGroup(),
-		flag.NewClientFlags(), // for client/server mode
 		flag.NewRegistryFlagGroup(),
 		flag.NewRegoFlagGroup(),
 		reportFlagGroup,
@@ -363,7 +360,6 @@ func NewRootfsCommand(globalFlags *flag.GlobalFlagGroup) *cobra.Command {
 		flag.NewMisconfFlagGroup(),
 		flag.NewModuleFlagGroup(),
 		packageFlagGroup,
-		flag.NewClientFlags(), // for client/server mode
 		flag.NewRegistryFlagGroup(),
 		flag.NewRegoFlagGroup(),
 		reportFlagGroup,
@@ -428,7 +424,6 @@ func NewRepositoryCommand(globalFlags *flag.GlobalFlagGroup) *cobra.Command {
 		flag.NewPackageFlagGroup(),
 		flag.NewRegistryFlagGroup(),
 		flag.NewRegoFlagGroup(),
-		flag.NewClientFlags(), // for client/server mode
 		reportFlagGroup,
 		scanFlagGroup,
 		flag.NewSecretFlagGroup(),
@@ -518,62 +513,6 @@ func NewConvertCommand(globalFlags *flag.GlobalFlagGroup) *cobra.Command {
 	cmd.SetFlagErrorFunc(flagErrorFunc)
 	convertFlags.AddFlags(cmd)
 	cmd.SetUsageTemplate(fmt.Sprintf(usageTemplate, convertFlags.Usages(cmd)))
-
-	return cmd
-}
-
-// NewClientCommand returns the 'client' subcommand that is deprecated
-func NewClientCommand(globalFlags *flag.GlobalFlagGroup) *cobra.Command {
-	remoteFlags := flag.NewClientFlags()
-	remoteAddr := flag.Flag[string]{
-		Name:       "remote",
-		ConfigName: "server.addr",
-		Shorthand:  "",
-		Default:    "http://localhost:4954",
-		Usage:      "server address",
-	}
-	remoteFlags.ServerAddr = &remoteAddr // disable '--server' and enable '--remote' instead.
-
-	clientFlags := flag.Flags{
-		globalFlags,
-		flag.NewCacheFlagGroup(),
-		flag.NewDBFlagGroup(),
-		flag.NewMisconfFlagGroup(),
-		flag.NewRegistryFlagGroup(),
-		flag.NewRegoFlagGroup(),
-		remoteFlags,
-		flag.NewReportFlagGroup(),
-		flag.NewScanFlagGroup(),
-	}
-
-	cmd := &cobra.Command{
-		Use:     "client [flags] IMAGE_NAME",
-		Aliases: []string{"c"},
-		Hidden:  true, // 'client' command is deprecated
-		PreRunE: func(cmd *cobra.Command, args []string) error {
-			if err := clientFlags.Bind(cmd); err != nil {
-				return xerrors.Errorf("flag bind error: %w", err)
-			}
-			return validateArgs(cmd, args)
-		},
-		RunE: func(cmd *cobra.Command, args []string) error {
-			log.Warn("'client' subcommand is deprecated now. See https://github.com/aquasecurity/trivy/discussions/2119")
-
-			if err := clientFlags.Bind(cmd); err != nil {
-				return xerrors.Errorf("flag bind error: %w", err)
-			}
-			options, err := clientFlags.ToOptions(args)
-			if err != nil {
-				return xerrors.Errorf("flag error: %w", err)
-			}
-			return artifact.Run(cmd.Context(), options, artifact.TargetContainerImage)
-		},
-		SilenceErrors: true,
-		SilenceUsage:  true,
-	}
-	cmd.SetFlagErrorFunc(flagErrorFunc)
-	clientFlags.AddFlags(cmd)
-	cmd.SetUsageTemplate(fmt.Sprintf(usageTemplate, clientFlags.Usages(cmd)))
 
 	return cmd
 }
@@ -842,7 +781,6 @@ func NewVMCommand(globalFlags *flag.GlobalFlagGroup) *cobra.Command {
 		misconfFlagGroup,
 		flag.NewModuleFlagGroup(),
 		packageFlagGroup,
-		flag.NewClientFlags(), // for client/server mode
 		reportFlagGroup,
 		flag.NewScanFlagGroup(),
 		flag.NewSecretFlagGroup(),
@@ -931,7 +869,6 @@ func NewSBOMCommand(globalFlags *flag.GlobalFlagGroup) *cobra.Command {
 		cacheFlagGroup,
 		flag.NewDBFlagGroup(),
 		packageFlagGroup,
-		flag.NewClientFlags(),       // for client/server mode
 		flag.NewRegistryFlagGroup(), // for DBs in private registries
 		reportFlagGroup,
 		scanFlagGroup,
