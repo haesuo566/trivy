@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -119,21 +120,22 @@ func initConfig(configFile string, pathChanged bool) error {
 
 func NewRootCommand(globalFlags *flag.GlobalFlagGroup) *cobra.Command {
 	var versionFormat string
+	name := filepath.Base(os.Args[0])
 	cmd := &cobra.Command{
-		Use:   "trivy [global flags] command [flags] target",
+		Use:   name + " [global flags] command [flags] target",
 		Short: "Unified security scanner",
 		Long:  "Scanner for vulnerabilities in container images, file systems, and Git repositories, as well as for configuration issues and hard-coded secrets",
-		Example: `  # Scan a container image
-  $ trivy image python:3.4-alpine
+		Example: fmt.Sprintf(`  # Scan a container image
+  $ %s image python:3.4-alpine
 
   # Scan a container image from a tar archive
-  $ trivy image --input ruby-3.1.tar
+  $ %s image --input ruby-3.1.tar
 
   # Scan local filesystem
-  $ trivy fs .
+  $ %s fs .
 
   # Run in server mode
-  $ trivy server`,
+  $ %s server`, name, name, name, name),
 		Args: cobra.NoArgs,
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 			// Set the Trivy version here so that we can override version printer.

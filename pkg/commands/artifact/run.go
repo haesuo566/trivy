@@ -37,7 +37,6 @@ import (
 	"github.com/aquasecurity/trivy/pkg/scan"
 	"github.com/aquasecurity/trivy/pkg/types"
 	"github.com/aquasecurity/trivy/pkg/version/doc"
-	xhttp "github.com/aquasecurity/trivy/pkg/x/http"
 	xstrings "github.com/aquasecurity/trivy/pkg/x/strings"
 )
 
@@ -125,14 +124,6 @@ func NewRunner(ctx context.Context, cliOptions flag.Options, targetKind TargetKi
 			}
 		}
 	}()
-
-	// Set the default HTTP transport
-	xhttp.SetDefaultTransport(xhttp.NewTransport(xhttp.Options{
-		Insecure:  cliOptions.Insecure,
-		CACerts:   cliOptions.CACerts,
-		Timeout:   cliOptions.Timeout,
-		TraceHTTP: cliOptions.TraceHTTP,
-	}))
 
 	r.versionChecker = notification.NewVersionChecker(string(targetKind), &cliOptions)
 
