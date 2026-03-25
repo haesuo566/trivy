@@ -443,8 +443,8 @@ func (o *Options) Align(f *Flags) error {
 	if packageFlagGroup, ok := findFlagGroup[*PackageFlagGroup](f); ok &&
 		packageFlagGroup.PkgRelationships != nil &&
 		slices.Compare(o.PkgRelationships, ftypes.Relationships) != 0 &&
-		(o.DependencyTree || slices.Contains(types.SupportedSBOMFormats, o.Format)) {
-		return xerrors.Errorf("'--pkg-relationships' cannot be used with '--dependency-tree' or SBOM formats")
+		slices.Contains(types.SupportedSBOMFormats, o.Format) {
+		return xerrors.Errorf("'--pkg-relationships' cannot be used with SBOM formats")
 	}
 
 	if o.Compliance.Spec.ID != "" {
@@ -482,8 +482,8 @@ func (o *Options) enableSBOM() {
 		o.Scanners.Enable(types.SBOMScanner)
 	}
 
-	// Enable the SBOM scanner when a list of packages is necessary.
-	if o.ListAllPkgs || slices.Contains(types.SupportedSBOMFormats, o.Format) {
+	// Enable the SBOM scanner when SBOM format is used.
+	if slices.Contains(types.SupportedSBOMFormats, o.Format) {
 		o.Scanners.Enable(types.SBOMScanner)
 	}
 

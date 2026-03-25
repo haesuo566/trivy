@@ -13,25 +13,19 @@ import (
 	iacTypes "github.com/aquasecurity/trivy/pkg/iac/types"
 	"github.com/aquasecurity/trivy/pkg/log"
 	"github.com/aquasecurity/trivy/pkg/types"
-	xstrings "github.com/aquasecurity/trivy/pkg/x/strings"
 )
 
 func TestReportFlagGroup_ToOptions(t *testing.T) {
 	type fields struct {
-		format           types.Format
-		template         string
-		dependencyTree   bool
-		listAllPkgs  bool
-		ignoreFile   string
-		exitCode         int
-		exitOnEOSL       bool
-		ignorePolicy     string
+		format     types.Format
+		ignoreFile string
+		exitCode   int
+		exitOnEOSL bool
+		ignorePolicy string
 		output     string
 		severities string
-		compliance       string
-		debug            bool
-		pkgTypes         string
-		tableModes       []string
+		compliance string
+		debug      bool
 	}
 	tests := []struct {
 		name     string
@@ -46,7 +40,7 @@ func TestReportFlagGroup_ToOptions(t *testing.T) {
 			want:   flag.ReportOptions{},
 		},
 		{
-			name: "happy path with an cyclonedx",
+			name: "happy path with cyclonedx",
 			fields: fields{
 				severities: "CRITICAL",
 				format:     "cyclonedx",
@@ -54,66 +48,6 @@ func TestReportFlagGroup_ToOptions(t *testing.T) {
 			want: flag.ReportOptions{
 				Severities: []dbTypes.Severity{dbTypes.SeverityCritical},
 				Format:     types.FormatCycloneDX,
-			},
-		},
-		{
-			name: "invalid option combination: --template enabled without --format",
-			fields: fields{
-				template:   "@contrib/gitlab.tpl",
-				severities: "LOW",
-			},
-			wantLogs: []string{
-				"'--template' is ignored because '--format template' is not specified. Use '--template' option with '--format template' option.",
-			},
-			want: flag.ReportOptions{
-				Severities: []dbTypes.Severity{dbTypes.SeverityLow},
-				Template:   "@contrib/gitlab.tpl",
-			},
-		},
-		{
-			name: "invalid option combination: --template and --format json",
-			fields: fields{
-				format:     "json",
-				template:   "@contrib/gitlab.tpl",
-				severities: "LOW",
-			},
-			wantLogs: []string{
-				"'--template' is ignored because '--format json' is specified. Use '--template' option with '--format template' option.",
-			},
-			want: flag.ReportOptions{
-				Format:     "json",
-				Severities: []dbTypes.Severity{dbTypes.SeverityLow},
-				Template:   "@contrib/gitlab.tpl",
-			},
-		},
-		{
-			name: "invalid option combination: --format template without --template",
-			fields: fields{
-				format:     "template",
-				severities: "LOW",
-			},
-			wantLogs: []string{
-				"'--format template' is ignored because '--template' is not specified. Specify '--template' option when you use '--format template'.",
-			},
-			want: flag.ReportOptions{
-				Format:     "template",
-				Severities: []dbTypes.Severity{dbTypes.SeverityLow},
-			},
-		},
-		{
-			name: "invalid option combination: --list-all-pkgs with --format table",
-			fields: fields{
-				format:      "table",
-				severities:  "LOW",
-				listAllPkgs: true,
-			},
-			wantLogs: []string{
-				`"--list-all-pkgs" is only valid for the JSON format, for other formats a list of packages is automatically included.`,
-			},
-			want: flag.ReportOptions{
-				Format:      "table",
-				Severities:  []dbTypes.Severity{dbTypes.SeverityLow},
-				ListAllPkgs: true,
 			},
 		},
 		{
@@ -145,56 +79,6 @@ func TestReportFlagGroup_ToOptions(t *testing.T) {
 				Severities: []dbTypes.Severity{dbTypes.SeverityLow},
 			},
 		},
-		{
-			name: "invalid option combination: --table-modes with --format json",
-			fields: fields{
-				format:     "json",
-				tableModes: xstrings.ToStringSlice(types.SupportedTableModes),
-			},
-			wantErr: `"--table-mode" can be used only with "--format table".`,
-		},
-		{
-			name: "happy path with template file (.tpl extension)",
-			fields: fields{
-				format:     "template",
-				template:   "@contrib/gitlab.tpl",
-				severities: "HIGH",
-			},
-			want: flag.ReportOptions{
-				Format:     "template",
-				Template:   "@contrib/gitlab.tpl",
-				Severities: []dbTypes.Severity{dbTypes.SeverityHigh},
-			},
-		},
-		{
-			name: "error: template file without .tpl extension",
-			fields: fields{
-				format:   "template",
-				template: "@/etc/passwd",
-			},
-			wantErr: "template file must have .tpl extension: /etc/passwd",
-		},
-		{
-			name: "error: template file with wrong extension",
-			fields: fields{
-				format:   "template",
-				template: "@report.txt",
-			},
-			wantErr: "template file must have .tpl extension: report.txt",
-		},
-		{
-			name: "inline template (no @ prefix) is allowed",
-			fields: fields{
-				format:     "template",
-				template:   "{{ .Results }}",
-				severities: "MEDIUM",
-			},
-			want: flag.ReportOptions{
-				Format:     "template",
-				Template:   "{{ .Results }}",
-				Severities: []dbTypes.Severity{dbTypes.SeverityMedium},
-			},
-		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -207,9 +91,6 @@ func TestReportFlagGroup_ToOptions(t *testing.T) {
 			out := newLogger(level)
 
 			setValue(flag.FormatFlag.ConfigName, string(tt.fields.format))
-			setValue(flag.TemplateFlag.ConfigName, tt.fields.template)
-			setValue(flag.DependencyTreeFlag.ConfigName, tt.fields.dependencyTree)
-			setValue(flag.ListAllPkgsFlag.ConfigName, tt.fields.listAllPkgs)
 			setValue(flag.IgnoreFileFlag.ConfigName, tt.fields.ignoreFile)
 			setValue(flag.IgnorePolicyFlag.ConfigName, tt.fields.ignorePolicy)
 			setValue(flag.ExitCodeFlag.ConfigName, tt.fields.exitCode)
@@ -217,22 +98,17 @@ func TestReportFlagGroup_ToOptions(t *testing.T) {
 			setValue(flag.OutputFlag.ConfigName, tt.fields.output)
 			setValue(flag.SeverityFlag.ConfigName, tt.fields.severities)
 			setValue(flag.ComplianceFlag.ConfigName, tt.fields.compliance)
-			setSliceValue(flag.TableModeFlag.ConfigName, tt.fields.tableModes)
 
 			// Assert options
 			f := &flag.ReportFlagGroup{
-				Format:          flag.FormatFlag.Clone(),
-				Template:        flag.TemplateFlag.Clone(),
-				DependencyTree:  flag.DependencyTreeFlag.Clone(),
-				ListAllPkgs:     flag.ListAllPkgsFlag.Clone(),
-				IgnoreFile:      flag.IgnoreFileFlag.Clone(),
-				IgnorePolicy:    flag.IgnorePolicyFlag.Clone(),
-				ExitCode:        flag.ExitCodeFlag.Clone(),
-				ExitOnEOL:       flag.ExitOnEOLFlag.Clone(),
-				Output:          flag.OutputFlag.Clone(),
-				Severity:        flag.SeverityFlag.Clone(),
-				Compliance:      flag.ComplianceFlag.Clone(),
-				TableMode:       flag.TableModeFlag.Clone(),
+				Format:       flag.FormatFlag.Clone(),
+				IgnoreFile:   flag.IgnoreFileFlag.Clone(),
+				IgnorePolicy: flag.IgnorePolicyFlag.Clone(),
+				ExitCode:     flag.ExitCodeFlag.Clone(),
+				ExitOnEOL:    flag.ExitOnEOLFlag.Clone(),
+				Output:       flag.OutputFlag.Clone(),
+				Severity:     flag.SeverityFlag.Clone(),
+				Compliance:   flag.ComplianceFlag.Clone(),
 			}
 
 			flags := flag.Flags{f}

@@ -90,15 +90,9 @@ const (
 	ComplianceEksCIS14           = Compliance("eks-cis-1.4")
 	ComplianceRke2CIS124         = Compliance("rke2-cis-1.24")
 
-	FormatTable      Format = "table"
-	FormatJSON       Format = "json"
-	FormatTemplate   Format = "template"
-	FormatSarif      Format = "sarif"
-	FormatCycloneDX  Format = "cyclonedx"
-	FormatSPDX       Format = "spdx"
-	FormatSPDXJSON   Format = "spdx-json"
-	FormatGitHub     Format = "github"
-	FormatCosignVuln Format = "cosign-vuln"
+	FormatCycloneDX Format = "cyclonedx"
+	FormatSPDX      Format = "spdx"
+	FormatSPDXJSON  Format = "spdx-json"
 )
 
 var BuiltInK8sCompliances = []string{
@@ -112,21 +106,14 @@ var BuiltInK8sCompliances = []string{
 
 var (
 	SupportedFormats = []Format{
-		FormatTable,
-		FormatJSON,
-		FormatTemplate,
-		FormatSarif,
 		FormatCycloneDX,
 		FormatSPDX,
 		FormatSPDXJSON,
-		FormatGitHub,
-		FormatCosignVuln,
 	}
 	SupportedSBOMFormats = []Format{
 		FormatCycloneDX,
 		FormatSPDX,
 		FormatSPDXJSON,
-		FormatGitHub,
 	}
 	SupportedCompliances = []string{
 		ComplianceK8sNsa10,
@@ -140,18 +127,6 @@ var (
 		ComplianceRke2CIS124,
 	}
 )
-
-type TableMode string
-
-const (
-	Summary  TableMode = "summary"
-	Detailed TableMode = "detailed"
-)
-
-var SupportedTableModes = []TableMode{
-	Summary,
-	Detailed,
-}
 
 // Result holds a target and detected vulnerabilities
 type Result struct {

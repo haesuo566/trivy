@@ -29,7 +29,7 @@ func clusterRun(ctx context.Context, opts flag.Options, cluster k8s.Cluster) err
 		if err != nil {
 			return xerrors.Errorf("get k8s artifacts with node info error: %w", err)
 		}
-	case types.FormatJSON, types.FormatTable:
+	default:
 		k8sOpts := []trivyk8s.K8sOption{
 			trivyk8s.WithExcludeNamespaces(opts.ExcludeNamespaces),
 			trivyk8s.WithIncludeNamespaces(opts.IncludeNamespaces),
@@ -48,8 +48,6 @@ func clusterRun(ctx context.Context, opts flag.Options, cluster k8s.Cluster) err
 				return xerrors.Errorf("get k8s artifacts error: %w", err)
 			}
 		}
-	default:
-		return xerrors.Errorf(`unknown format %q. Use "json" or "table" or "cyclonedx"`, opts.Format)
 	}
 
 	if !opts.DisableNodeCollector && !opts.Quiet {

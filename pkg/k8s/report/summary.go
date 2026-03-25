@@ -12,7 +12,6 @@ import (
 
 	"github.com/aquasecurity/table"
 	dbTypes "github.com/aquasecurity/trivy-db/pkg/types"
-	pkgReport "github.com/aquasecurity/trivy/pkg/report/table"
 	"github.com/aquasecurity/trivy/pkg/types"
 )
 
@@ -117,7 +116,7 @@ func (s SummaryWriter) Write(report Report) error {
 
 	keyParts := []string{"Severities:"}
 	for _, s := range s.Severities {
-		keyParts = append(keyParts, fmt.Sprintf("%s=%s", s[:1], pkgReport.ColorizeSeverity(s, s)))
+		keyParts = append(keyParts, fmt.Sprintf("%s=%s", s[:1], s))
 	}
 
 	_, _ = fmt.Fprintln(s.Output, strings.Join(keyParts, " "))
@@ -130,7 +129,7 @@ func (s SummaryWriter) generateSummary(sevCount map[string]int) []string {
 
 	for _, sev := range s.Severities {
 		if count, ok := sevCount[sev]; ok {
-			parts = append(parts, pkgReport.ColorizeSeverity(strconv.Itoa(count), sev))
+			parts = append(parts, strconv.Itoa(count))
 		} else {
 			parts = append(parts, " ")
 		}

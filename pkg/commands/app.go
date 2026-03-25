@@ -523,10 +523,7 @@ func NewConfigCommand(globalFlags *flag.GlobalFlagGroup) *cobra.Command {
 	}
 
 	reportFlagGroup := flag.NewReportFlagGroup()
-	reportFlagGroup.DependencyTree = nil                                                     // disable '--dependency-tree'
-	reportFlagGroup.ListAllPkgs = nil                                                        // disable '--list-all-pkgs'
 	reportFlagGroup.ExitOnEOL = nil                                                          // disable '--exit-on-eol'
-	reportFlagGroup.ShowSuppressed = nil                                                     // disable '--show-suppressed'
 	reportFlagGroup.ReportFormat.Usage = "specify a compliance report format for the output" // @TODO: support --report summary for non compliance reports
 
 	cacheFlagGroup := flag.NewCacheFlagGroup()
@@ -602,7 +599,6 @@ func NewKubernetesCommand(globalFlags *flag.GlobalFlagGroup) *cobra.Command {
 
 	reportFlagGroup := flag.NewReportFlagGroup()
 	reportFlagGroup.ExitOnEOL = nil // disable '--exit-on-eol'
-	reportFlagGroup.TableMode = nil // disable '--table-mode's
 	compliance := flag.ComplianceFlag.Clone()
 	var compliances strings.Builder
 	for _, val := range types.BuiltInK8sCompliances {
@@ -613,9 +609,9 @@ func NewKubernetesCommand(globalFlags *flag.GlobalFlagGroup) *cobra.Command {
 
 	formatFlag := flag.FormatFlag.Clone()
 	formatFlag.Values = xstrings.ToStringSlice([]types.Format{
-		types.FormatTable,
-		types.FormatJSON,
 		types.FormatCycloneDX,
+		types.FormatSPDX,
+		types.FormatSPDXJSON,
 	})
 	reportFlagGroup.Format = formatFlag
 
@@ -757,8 +753,7 @@ func NewVMCommand(globalFlags *flag.GlobalFlagGroup) *cobra.Command {
 
 func NewSBOMCommand(globalFlags *flag.GlobalFlagGroup) *cobra.Command {
 	reportFlagGroup := flag.NewReportFlagGroup()
-	reportFlagGroup.DependencyTree = nil // disable '--dependency-tree'
-	reportFlagGroup.ReportFormat = nil   // TODO: support --report summary
+	reportFlagGroup.ReportFormat = nil // TODO: support --report summary
 
 	scanners := flag.ScannersFlag.Clone()
 	scanners.Values = xstrings.ToStringSlice(types.Scanners{

@@ -186,7 +186,7 @@ func TestFlags(t *testing.T) {
 				"test",
 			},
 			want: want{
-				format: types.FormatTable,
+				format: types.FormatCycloneDX,
 				severities: []dbTypes.Severity{
 					dbTypes.SeverityUnknown,
 					dbTypes.SeverityLow,
@@ -195,8 +195,6 @@ func TestFlags(t *testing.T) {
 					dbTypes.SeverityCritical,
 				},
 				scanners: types.Scanners{
-					types.VulnerabilityScanner,
-					types.SecretScanner,
 					types.SBOMScanner,
 				},
 			},
@@ -209,14 +207,12 @@ func TestFlags(t *testing.T) {
 				"LOW,MEDIUM",
 			},
 			want: want{
-				format: types.FormatTable,
+				format: types.FormatCycloneDX,
 				severities: []dbTypes.Severity{
 					dbTypes.SeverityLow,
 					dbTypes.SeverityMedium,
 				},
 				scanners: types.Scanners{
-					types.VulnerabilityScanner,
-					types.SecretScanner,
 					types.SBOMScanner,
 				},
 			},
@@ -231,35 +227,31 @@ func TestFlags(t *testing.T) {
 				"HIGH",
 			},
 			want: want{
-				format: types.FormatTable,
+				format: types.FormatCycloneDX,
 				severities: []dbTypes.Severity{
 					dbTypes.SeverityLow,
 					dbTypes.SeverityHigh,
 				},
 				scanners: types.Scanners{
-					types.VulnerabilityScanner,
-					types.SecretScanner,
 					types.SBOMScanner,
 				},
 			},
 		},
 		{
-			name: "happy path with json",
+			name: "happy path with spdx",
 			arguments: []string{
 				"test",
 				"--format",
-				"json",
+				"spdx",
 				"--severity",
 				"CRITICAL",
 			},
 			want: want{
-				format: types.FormatJSON,
+				format: types.FormatSPDX,
 				severities: []dbTypes.Severity{
 					dbTypes.SeverityCritical,
 				},
 				scanners: types.Scanners{
-					types.VulnerabilityScanner,
-					types.SecretScanner,
 					types.SBOMScanner,
 				},
 			},
@@ -274,7 +266,7 @@ func TestFlags(t *testing.T) {
 				"docker-cis-1.6.0",
 			},
 			want: want{
-				format: types.FormatTable,
+				format: types.FormatCycloneDX,
 				severities: []dbTypes.Severity{
 					dbTypes.SeverityUnknown,
 					dbTypes.SeverityLow,

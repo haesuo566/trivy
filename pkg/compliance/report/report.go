@@ -4,8 +4,6 @@ import (
 	"context"
 	"io"
 
-	"golang.org/x/xerrors"
-
 	dbTypes "github.com/aquasecurity/trivy-db/pkg/types"
 	"github.com/aquasecurity/trivy/pkg/compliance/spec"
 	iacTypes "github.com/aquasecurity/trivy/pkg/iac/types"
@@ -66,29 +64,11 @@ type Writer interface {
 
 // Write writes the results in the given format
 func Write(ctx context.Context, report *ComplianceReport, option Option) error {
-	switch option.Format {
-	case types.FormatJSON:
-		jwriter := JSONWriter{
-			Output: option.Output,
-			Report: option.Report,
-		}
-		return jwriter.Write(report)
-	case types.FormatTable:
-		if !report.empty() {
-			complianceWriter := &TableWriter{
-				Output:     option.Output,
-				Report:     option.Report,
-				Severities: option.Severities,
-			}
-			err := complianceWriter.Write(ctx, report)
-			if err != nil {
-				return err
-			}
-		}
-		return nil
-	default:
-		return xerrors.Errorf(`unknown format %q. Use "json" or "table"`, option.Format)
+	jwriter := JSONWriter{
+		Output: option.Output,
+		Report: option.Report,
 	}
+	return jwriter.Write(report)
 }
 
 func (r ComplianceReport) empty() bool {
