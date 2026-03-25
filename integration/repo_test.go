@@ -531,7 +531,7 @@ func TestRepository(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			command := cmp.Or(tt.args.command, "repo")
-			format := cmp.Or(tt.args.format, types.FormatJSON)
+			format := cmp.Or(tt.args.format, formatJSON)
 
 			osArgs := buildArgs(t, cacheDir, command, format, tt.args)
 
@@ -602,7 +602,7 @@ func TestRepositoryWithOverride(t *testing.T) {
 				command = tt.args.command
 			}
 
-			format := types.FormatJSON
+			format := formatJSON
 			if tt.args.format != "" {
 				format = tt.args.format
 			}

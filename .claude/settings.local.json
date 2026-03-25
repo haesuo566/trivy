@@ -4,7 +4,9 @@
       "Bash(node:*)",
       "Bash(go test:*)",
       "Bash(go build:*)",
-      "Bash(awk:*)"
+      "Bash(awk:*)",
+      "Bash(mkdir -p ~/.claude/channels/telegram/approved)",
+      "Bash(~/.claude/channels/telegram/approved/7993779673)"
     ]
   }
 }

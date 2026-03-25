@@ -39,7 +39,7 @@ func TestTar(t *testing.T) {
 		{
 			name: "alpine 3.9",
 			args: args{
-				Format: types.FormatJSON,
+				Format: formatJSON,
 				Input:  "testdata/fixtures/images/alpine-39.tar.gz",
 			},
 			golden: goldenAlpine39,
@@ -47,7 +47,7 @@ func TestTar(t *testing.T) {
 		{
 			name: "alpine 3.9 with skip dirs",
 			args: args{
-				Format: types.FormatJSON,
+				Format: formatJSON,
 				Input:  "testdata/fixtures/images/alpine-39.tar.gz",
 				SkipDirs: []string{
 					"/etc",
@@ -58,7 +58,7 @@ func TestTar(t *testing.T) {
 		{
 			name: "alpine 3.9 with skip files",
 			args: args{
-				Format: types.FormatJSON,
+				Format: formatJSON,
 				Input:  "testdata/fixtures/images/alpine-39.tar.gz",
 				SkipFiles: []string{
 					"/etc",
@@ -147,7 +147,7 @@ func TestTar(t *testing.T) {
 					"HIGH",
 					"CRITICAL",
 				},
-				Format: types.FormatJSON,
+				Format: formatJSON,
 				Input:  "testdata/fixtures/images/alpine-39.tar.gz",
 			},
 			golden: goldenAlpine39HighCritical,
@@ -160,7 +160,7 @@ func TestTar(t *testing.T) {
 					"CVE-2019-1549",
 					"CVE-2019-14697",
 				},
-				Format: types.FormatJSON,
+				Format: formatJSON,
 				Input:  "testdata/fixtures/images/alpine-39.tar.gz",
 			},
 			golden: goldenAlpine39IgnoreCVEIDs,
@@ -168,7 +168,7 @@ func TestTar(t *testing.T) {
 		{
 			name: "alpine 3.10",
 			args: args{
-				Format: types.FormatJSON,
+				Format: formatJSON,
 				Input:  "testdata/fixtures/images/alpine-310.tar.gz",
 			},
 			golden: goldenAlpine310JSON,
@@ -176,7 +176,7 @@ func TestTar(t *testing.T) {
 		{
 			name: "alpine distroless",
 			args: args{
-				Format: types.FormatJSON,
+				Format: formatJSON,
 				Input:  "testdata/fixtures/images/alpine-distroless.tar.gz",
 			},
 			golden: goldenAlpineDistroless,
@@ -184,7 +184,7 @@ func TestTar(t *testing.T) {
 		{
 			name: "amazon linux 1",
 			args: args{
-				Format: types.FormatJSON,
+				Format: formatJSON,
 				Input:  "testdata/fixtures/images/amazon-1.tar.gz",
 			},
 			golden: goldenAmazon1,
@@ -192,7 +192,7 @@ func TestTar(t *testing.T) {
 		{
 			name: "amazon linux 2",
 			args: args{
-				Format: types.FormatJSON,
+				Format: formatJSON,
 				Input:  "testdata/fixtures/images/amazon-2.tar.gz",
 			},
 			golden: goldenAmazon2,
@@ -200,7 +200,7 @@ func TestTar(t *testing.T) {
 		{
 			name: "debian buster/10",
 			args: args{
-				Format: types.FormatJSON,
+				Format: formatJSON,
 				Input:  "testdata/fixtures/images/debian-buster.tar.gz",
 			},
 			golden: goldenDebianBuster,
@@ -209,7 +209,7 @@ func TestTar(t *testing.T) {
 			name: "debian buster/10 with --ignore-unfixed option",
 			args: args{
 				IgnoreUnfixed: true,
-				Format:        types.FormatJSON,
+				Format:        formatJSON,
 				Input:         "testdata/fixtures/images/debian-buster.tar.gz",
 			},
 			golden: goldenDebianBusterIgnoreUnfixed,
@@ -217,7 +217,7 @@ func TestTar(t *testing.T) {
 		{
 			name: "debian stretch/9",
 			args: args{
-				Format: types.FormatJSON,
+				Format: formatJSON,
 				Input:  "testdata/fixtures/images/debian-stretch.tar.gz",
 			},
 			golden: goldenDebianStretch,
@@ -225,7 +225,7 @@ func TestTar(t *testing.T) {
 		{
 			name: "ubuntu 18.04",
 			args: args{
-				Format: types.FormatJSON,
+				Format: formatJSON,
 				Input:  "testdata/fixtures/images/ubuntu-1804.tar.gz",
 			},
 			golden: goldenUbuntu1804,
@@ -234,7 +234,7 @@ func TestTar(t *testing.T) {
 			name: "ubuntu 18.04 with --ignore-unfixed option",
 			args: args{
 				IgnoreUnfixed: true,
-				Format:        types.FormatJSON,
+				Format:        formatJSON,
 				Input:         "testdata/fixtures/images/ubuntu-1804.tar.gz",
 			},
 			golden: goldenUbuntu1804IgnoreUnfixed,
@@ -242,7 +242,7 @@ func TestTar(t *testing.T) {
 		{
 			name: "centos 7",
 			args: args{
-				Format: types.FormatJSON,
+				Format: formatJSON,
 				Input:  "testdata/fixtures/images/centos-7.tar.gz",
 			},
 			golden: goldenCentOS7,
@@ -251,7 +251,7 @@ func TestTar(t *testing.T) {
 			name: "centos 7 with --ignore-unfixed option",
 			args: args{
 				IgnoreUnfixed: true,
-				Format:        types.FormatJSON,
+				Format:        formatJSON,
 				Input:         "testdata/fixtures/images/centos-7.tar.gz",
 			},
 			golden: goldenCentOS7IgnoreUnfixed,
@@ -261,7 +261,7 @@ func TestTar(t *testing.T) {
 			args: args{
 				IgnoreUnfixed: true,
 				Severity:      []string{"MEDIUM"},
-				Format:        types.FormatJSON,
+				Format:        formatJSON,
 				Input:         "testdata/fixtures/images/centos-7.tar.gz",
 			},
 			golden: goldenCentOS7Medium,
@@ -269,7 +269,7 @@ func TestTar(t *testing.T) {
 		{
 			name: "centos 6",
 			args: args{
-				Format: types.FormatJSON,
+				Format: formatJSON,
 				Input:  "testdata/fixtures/images/centos-6.tar.gz",
 			},
 			golden: goldenCentOS6,
@@ -277,7 +277,7 @@ func TestTar(t *testing.T) {
 		{
 			name: "ubi 7",
 			args: args{
-				Format: types.FormatJSON,
+				Format: formatJSON,
 				Input:  "testdata/fixtures/images/ubi-7.tar.gz",
 			},
 			golden: goldenUBI7,
@@ -285,7 +285,7 @@ func TestTar(t *testing.T) {
 		{
 			name: "ubi 7 with comprehensive priority",
 			args: args{
-				Format:            types.FormatJSON,
+				Format:            formatJSON,
 				Input:             "testdata/fixtures/images/ubi-7.tar.gz",
 				DetectionPriority: ftypes.PriorityComprehensive,
 			},
@@ -294,7 +294,7 @@ func TestTar(t *testing.T) {
 		{
 			name: "almalinux 8",
 			args: args{
-				Format: types.FormatJSON,
+				Format: formatJSON,
 				Input:  "testdata/fixtures/images/almalinux-8.tar.gz",
 			},
 			golden: goldenAlmaLinux8,
@@ -302,7 +302,7 @@ func TestTar(t *testing.T) {
 		{
 			name: "rocky linux 8",
 			args: args{
-				Format: types.FormatJSON,
+				Format: formatJSON,
 				Input:  "testdata/fixtures/images/rockylinux-8.tar.gz",
 			},
 			golden: goldenRockyLinux8,
@@ -310,7 +310,7 @@ func TestTar(t *testing.T) {
 		{
 			name: "distroless base",
 			args: args{
-				Format: types.FormatJSON,
+				Format: formatJSON,
 				Input:  "testdata/fixtures/images/distroless-base.tar.gz",
 			},
 			golden: goldenDistrolessBase,
@@ -318,7 +318,7 @@ func TestTar(t *testing.T) {
 		{
 			name: "distroless python27",
 			args: args{
-				Format: types.FormatJSON,
+				Format: formatJSON,
 				Input:  "testdata/fixtures/images/distroless-python27.tar.gz",
 			},
 			golden: goldenDistrolessPython27,
@@ -326,7 +326,7 @@ func TestTar(t *testing.T) {
 		{
 			name: "oracle linux 8",
 			args: args{
-				Format: types.FormatJSON,
+				Format: formatJSON,
 				Input:  "testdata/fixtures/images/oraclelinux-8.tar.gz",
 			},
 			golden: goldenOracleLinux8,
@@ -334,7 +334,7 @@ func TestTar(t *testing.T) {
 		{
 			name: "opensuse leap 15.1",
 			args: args{
-				Format: types.FormatJSON,
+				Format: formatJSON,
 				Input:  "testdata/fixtures/images/opensuse-leap-151.tar.gz",
 			},
 			golden: goldenOpenSUSELeap151,
@@ -342,7 +342,7 @@ func TestTar(t *testing.T) {
 		{
 			name: "opensuse tumbleweed",
 			args: args{
-				Format: types.FormatJSON,
+				Format: formatJSON,
 				Input:  "testdata/fixtures/images/opensuse-tumbleweed.tar.gz",
 			},
 			golden: goldenOpenSUSETumbleweed,
@@ -350,7 +350,7 @@ func TestTar(t *testing.T) {
 		{
 			name: "sle micro rancher 5.4",
 			args: args{
-				Format: types.FormatJSON,
+				Format: formatJSON,
 				Input:  "testdata/fixtures/images/sle-micro-rancher-5.4_ndb.tar.gz",
 			},
 			golden: goldenSLMicroRancher54,
@@ -358,7 +358,7 @@ func TestTar(t *testing.T) {
 		{
 			name: "photon 3.0",
 			args: args{
-				Format: types.FormatJSON,
+				Format: formatJSON,
 				Input:  "testdata/fixtures/images/photon-30.tar.gz",
 			},
 			golden: goldenPhoton30,
@@ -366,7 +366,7 @@ func TestTar(t *testing.T) {
 		{
 			name: "CBL-Mariner 1.0",
 			args: args{
-				Format: types.FormatJSON,
+				Format: formatJSON,
 				Input:  "testdata/fixtures/images/mariner-1.0.tar.gz",
 			},
 			golden: goldenMariner10,
@@ -374,7 +374,7 @@ func TestTar(t *testing.T) {
 		{
 			name: "busybox with Cargo.lock integration",
 			args: args{
-				Format: types.FormatJSON,
+				Format: formatJSON,
 				Input:  "testdata/fixtures/images/busybox-with-lockfile.tar.gz",
 			},
 			golden: goldenBusyboxWithLockfile,
@@ -383,7 +383,7 @@ func TestTar(t *testing.T) {
 			name: "fluentd with RubyGems",
 			args: args{
 				IgnoreUnfixed: true,
-				Format:        types.FormatJSON,
+				Format:        formatJSON,
 				Input:         "testdata/fixtures/images/fluentd-multiple-lockfiles.tar.gz",
 			},
 			golden: goldenFluentdGems,
@@ -504,7 +504,7 @@ func TestTarWithOverride(t *testing.T) {
 			}
 
 			// Run Trivy
-			runTest(t, osArgs, tt.golden, types.FormatJSON, runOptions{
+			runTest(t, osArgs, tt.golden, formatJSON, runOptions{
 				fakeUUID: "3ff14136-e09f-4df9-80ea-%012d",
 				override: overrideFuncs(overrideUID, overrideFingerprint, tt.override),
 			})
@@ -596,7 +596,7 @@ func TestTarWithEnv(t *testing.T) {
 			}
 
 			// Run Trivy
-			runTest(t, []string{"image"}, tt.golden, types.FormatJSON, runOptions{
+			runTest(t, []string{"image"}, tt.golden, formatJSON, runOptions{
 				fakeUUID: "3ff14136-e09f-4df9-80ea-%012d",
 			})
 		})
@@ -673,7 +673,7 @@ cache:
 			}
 
 			// Run Trivy
-			runTest(t, osArgs, tt.golden, types.FormatJSON, runOptions{
+			runTest(t, osArgs, tt.golden, formatJSON, runOptions{
 				fakeUUID: "3ff14136-e09f-4df9-80ea-%012d",
 			})
 		})

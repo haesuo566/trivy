@@ -6,12 +6,11 @@ This directory contains integration tests for Trivy. These tests verify Trivy's 
 
 ### Run integration tests
 ```bash
-# Run standard integration tests (excludes VM, K8s, and module tests)
+# Run standard integration tests (excludes VM and K8s tests)
 mage test:integration
 
 # Run all types of integration tests separately
 mage test:integration  # Standard integration tests
-mage test:module       # Wasm module tests
 mage test:vm           # VM integration tests
 mage test:k8s          # Kubernetes integration tests
 ```
@@ -32,9 +31,6 @@ When you make changes that affect test output, you need to update the golden fil
 ```bash
 # Update golden files for standard integration tests
 mage test:updateGolden
-
-# Update golden files for Wasm module tests
-mage test:updateModuleGolden
 
 # Update golden files for VM integration tests
 mage test:updateVMGolden
@@ -85,7 +81,7 @@ func TestClientServer(t *testing.T) {
     }
 
     // ...
-    runTest(t, osArgs, tt.golden, types.FormatJSON, runOptions{
+    runTest(t, osArgs, tt.golden, formatJSON, runOptions{
         override: overrideFuncs(overrideUID, func(_ *testing.T, want, _ *types.Report) {
             want.ArtifactName = "https://github.com/knqyf263/trivy-ci-test"
         }),
@@ -149,8 +145,6 @@ Tests are organized by functionality:
 - `registry_test.go` - Container registry integration
 - `config_test.go` - Configuration handling (CLI flags, env vars, config files)
 - `vm_test.go` - Virtual machine image scanning
-- `module_test.go` - Wasm module integration
-
 ### Test Data Directory Structure
 
 ```

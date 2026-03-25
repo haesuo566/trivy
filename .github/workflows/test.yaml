@@ -128,40 +128,6 @@ jobs:
       - name: Run k8s integration tests
         run: mage test:k8s
 
-  module-test:
-    name: Module Integration Test
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-        with:
-          persist-credentials: false
-
-      - name: Set up Go
-        uses: ./.github/actions/setup-go
-
-      - name: Install tools
-        run: go install tool # GOBIN is added to the PATH by the setup-go action
-
-      - name: Generate image list digest
-        id: image-digest
-        run: |
-          source integration/testimages.ini
-          IMAGE_LIST=$(skopeo list-tags docker://$TEST_IMAGES)
-          DIGEST=$(echo "$IMAGE_LIST" | jq '.Tags += ["containerd"] | .Tags |= sort' | sha256sum | cut -d' ' -f1)
-          echo "digest=$DIGEST" >> $GITHUB_OUTPUT
-
-      - name: Restore test images from cache
-        uses: actions/cache@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
-        with:
-          path: integration/testdata/fixtures/images
-          key: cache-test-images-${{ steps.image-digest.outputs.digest }}
-
-      - name: Run module integration tests
-        shell: bash
-        run: |
-          mage test:module
-
   vm-test:
     name: VM Integration Test
     runs-on: ubuntu-latest

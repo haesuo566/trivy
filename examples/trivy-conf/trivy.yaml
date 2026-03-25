@@ -1,9 +1,7 @@
 timeout: 10m
-format: json
-dependency-tree: true
-list-all-pkgs: true
+format: cyclonedx
 exit-code: 1
-output: result.json
+output: result.cdx.json
 severity:
   - HIGH
   - CRITICAL

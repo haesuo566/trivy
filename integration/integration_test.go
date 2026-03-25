@@ -41,6 +41,10 @@ import (
 
 var update = flag.Bool("update", false, "update golden files")
 
+// formatJSON is a local constant for integration tests that produce Trivy JSON reports.
+// This format was removed from the public types but is still needed for test comparison.
+const formatJSON types.Format = "json"
+
 const SPDXSchema = "https://raw.githubusercontent.com/spdx/spdx-spec/support/v%s/schemas/spdx-schema.json"
 
 // Golden file paths
@@ -51,15 +55,8 @@ const (
 	goldenAlpine39HighCritical        = "testdata/alpine-39-high-critical.json.golden"
 	goldenAlpine39IgnoreCVEIDs        = "testdata/alpine-39-ignore-cveids.json.golden"
 	goldenAlpine39Skip                = "testdata/alpine-39-skip.json.golden"
-	goldenAlpine310JSON               = "testdata/alpine-310.json.golden"
-	goldenAlpine310ASFF               = "testdata/alpine-310.asff.golden"
-	goldenAlpine310GitLab             = "testdata/alpine-310.gitlab.golden"
-	goldenAlpine310GitLabCodeQuality  = "testdata/alpine-310.gitlab-codequality.golden"
-	goldenAlpine310GSBOM              = "testdata/alpine-310.gsbom.golden"
-	goldenAlpine310HTML               = "testdata/alpine-310.html.golden"
-	goldenAlpine310JUnit              = "testdata/alpine-310.junit.golden"
-	goldenAlpine310SARIF              = "testdata/alpine-310.sarif.golden"
-	goldenAlpineDistroless            = "testdata/alpine-distroless.json.golden"
+	goldenAlpine310JSON    = "testdata/alpine-310.json.golden"
+	goldenAlpineDistroless = "testdata/alpine-distroless.json.golden"
 	goldenAmazon1                     = "testdata/amazon-1.json.golden"
 	goldenAmazon2                     = "testdata/amazon-2.json.golden"
 	goldenBusyboxWithLockfile         = "testdata/busybox-with-lockfile.json.golden"
@@ -76,17 +73,15 @@ const (
 	goldenFluentdMultipleLockfilesCDX = "testdata/fluentd-multiple-lockfiles.cdx.json.golden"
 	goldenMariner10                   = "testdata/mariner-1.0.json.golden"
 	goldenNPM                         = "testdata/npm.json.golden"
-	goldenNPMGitLab                   = "testdata/npm.gitlab.golden"
-	goldenNPMUbuntuSeverity           = "testdata/npm-ubuntu-severity.json.golden"
+	goldenNPMUbuntuSeverity = "testdata/npm-ubuntu-severity.json.golden"
 	goldenOpenSUSELeap151             = "testdata/opensuse-leap-151.json.golden"
 	goldenOpenSUSETumbleweed          = "testdata/opensuse-tumbleweed.json.golden"
 	goldenOracleLinux8                = "testdata/oraclelinux-8.json.golden"
 	goldenPhoton30                    = "testdata/photon-30.json.golden"
 	goldenPom                         = "testdata/pom.json.golden"
 	goldenRockyLinux8                 = "testdata/rockylinux-8.json.golden"
-	goldenSecrets                     = "testdata/secrets.json.golden"
-	goldenSecretsASFF                 = "testdata/secrets.asff.golden"
-	goldenSLMicroRancher54            = "testdata/sl-micro-rancher5.4.json.golden"
+	goldenSecrets          = "testdata/secrets.json.golden"
+	goldenSLMicroRancher54 = "testdata/sl-micro-rancher5.4.json.golden"
 	goldenTestRepo                    = "testdata/test-repo.json.golden"
 	goldenUBI7                        = "testdata/ubi-7.json.golden"
 	goldenUBI7Comprehensive           = "testdata/ubi-7-comprehensive.json.golden"
@@ -151,10 +146,6 @@ const (
 	// VM tests (vm_test.go)
 	goldenAmazonLinux2GP2X86VM = "testdata/amazonlinux2-gp2-x86-vm.json.golden"
 	goldenUbuntuGP2X86VM       = "testdata/ubuntu-gp2-x86-vm.json.golden"
-
-	// Module tests (module_test.go)
-	goldenSpring4ShellJRE8  = "testdata/spring4shell-jre8.json.golden"
-	goldenSpring4ShellJRE11 = "testdata/spring4shell-jre11.json.golden"
 
 	// Plugin tests (plugin_test.go)
 	goldenCountPlugin020               = "testdata/count-0.2.0-plugin.txt.golden"
@@ -389,10 +380,8 @@ func runTest(t *testing.T, osArgs []string, wantFile string, format types.Format
 		compareCycloneDX(t, wantFile, outputFile)
 	case types.FormatSPDXJSON:
 		compareSPDXJson(t, wantFile, outputFile)
-	case types.FormatJSON:
+	case formatJSON:
 		compareReports(t, wantFile, outputFile, opts.override)
-	case types.FormatTemplate, types.FormatSarif, types.FormatGitHub:
-		compareRawFiles(t, wantFile, outputFile)
 	default:
 		require.Fail(t, "invalid format", "format: %s", format)
 	}

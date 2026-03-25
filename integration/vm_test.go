@@ -98,7 +98,7 @@ func TestVM(t *testing.T) {
 			osArgs = append(osArgs, imagePath)
 
 			// Run "trivy vm"
-			runTest(t, osArgs, tt.golden, types.FormatJSON, runOptions{
+			runTest(t, osArgs, tt.golden, formatJSON, runOptions{
 				override: overrideFuncs(overrideUID, overrideFingerprint, func(t *testing.T, _, got *types.Report) {
 					got.ArtifactName = "disk.img"
 					for i := range got.Results {

@@ -519,22 +519,6 @@
       },
       "type": "object"
     },
-    "module": {
-      "properties": {
-        "dir": {
-          "type": "string",
-          "description": "specify directory to the wasm modules that will be loaded"
-        },
-        "enable-modules": {
-          "items": {
-            "type": "string"
-          },
-          "type": "array",
-          "description": "[EXPERIMENTAL] module names to enable"
-        }
-      },
-      "type": "object"
-    },
     "pkg": {
       "properties": {
         "include-dev-deps": {

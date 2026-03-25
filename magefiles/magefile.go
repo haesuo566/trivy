@@ -170,52 +170,14 @@ func (Test) FixtureTerraformPlanSnapshots() error {
 	return fixtureTerraformPlanSnapshots(context.TODO())
 }
 
-// GenerateModules compiles WASM modules for unit tests
-func (Test) GenerateModules() error {
-	pattern := filepath.Join("pkg", "module", "testdata", "*", "*.go")
-	return compileWasmModules(pattern)
-}
-
-// GenerateExampleModules compiles example Wasm modules for integration tests
-func (Test) GenerateExampleModules() error {
-	pattern := filepath.Join("examples", "module", "*", "*.go")
-	return compileWasmModules(pattern)
-}
-
 // UpdateGolden updates golden files for integration tests
 func (Test) UpdateGolden() error {
 	return sh.RunWithV(ENV, "go", "test", "-tags=integration", "./integration/...", "./pkg/fanal/test/integration/...", "-update")
 }
 
-func compileWasmModules(pattern string) error {
-	goFiles, err := filepath.Glob(pattern)
-	if err != nil {
-		return err
-	}
-
-	for _, src := range goFiles {
-		// e.g. examples/module/spring4shell/spring4shell.go
-		//   => examples/module/spring4shell/spring4shell.wasm
-		dst := strings.TrimSuffix(src, ".go") + ".wasm"
-		if updated, err := target.Path(dst, src); err != nil {
-			return err
-		} else if !updated {
-			continue
-		}
-		envs := map[string]string{
-			"GOOS":   "wasip1",
-			"GOARCH": "wasm",
-		}
-		if err = sh.RunWith(envs, "go", "generate", src); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
 // Unit runs unit tests
 func (t Test) Unit() error {
-	mg.Deps(t.GenerateModules, rpm.Fixtures, gittest.Fixtures)
+	mg.Deps(rpm.Fixtures, gittest.Fixtures)
 	return sh.RunWithV(ENV, "go", "test", "-v", "-short", "-coverprofile=coverage.txt", "-covermode=atomic", "./...")
 }
 
@@ -311,18 +273,6 @@ func initk8sLimitedUserEnv() error {
 		}
 	}
 	return nil
-}
-
-// Module runs Wasm integration tests
-func (t Test) Module() error {
-	mg.Deps(t.FixtureContainerImages, t.GenerateExampleModules)
-	return sh.RunWithV(ENV, "go", "test", "-v", "-tags=module_integration", "./integration/...")
-}
-
-// UpdateModuleGolden updates golden files for Wasm integration tests
-func (t Test) UpdateModuleGolden() error {
-	mg.Deps(t.FixtureContainerImages, t.GenerateExampleModules)
-	return sh.RunWithV(ENV, "go", "test", "-v", "-tags=module_integration", "./integration/...", "-update")
 }
 
 // VM runs VM integration tests
