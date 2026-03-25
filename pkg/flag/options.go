@@ -409,7 +409,6 @@ type Options struct {
 	K8sOptions
 	LicenseOptions
 	MisconfOptions
-	ModuleOptions
 	PackageOptions
 	RegistryOptions
 	RegoOptions
@@ -714,7 +713,6 @@ func HiddenFlags() []string {
 		NewK8sFlagGroup(),
 		NewLicenseFlagGroup(),
 		NewMisconfFlagGroup(),
-		NewModuleFlagGroup(),
 		NewPackageFlagGroup(),
 		NewRegistryFlagGroup(),
 		NewRegoFlagGroup(),

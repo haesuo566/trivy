@@ -23,7 +23,6 @@ import (
 	"github.com/aquasecurity/trivy/pkg/flag"
 	k8scommands "github.com/aquasecurity/trivy/pkg/k8s/commands"
 	"github.com/aquasecurity/trivy/pkg/log"
-	"github.com/aquasecurity/trivy/pkg/module"
 	"github.com/aquasecurity/trivy/pkg/types"
 	"github.com/aquasecurity/trivy/pkg/version"
 	"github.com/aquasecurity/trivy/pkg/version/app"
@@ -88,7 +87,6 @@ func NewApp() *cobra.Command {
 		NewRepositoryCommand(globalFlags),
 		NewConfigCommand(globalFlags),
 		NewConvertCommand(globalFlags),
-		NewModuleCommand(globalFlags),
 		NewKubernetesCommand(globalFlags),
 		NewSBOMCommand(globalFlags),
 		NewVersionCommand(globalFlags),
@@ -214,7 +212,6 @@ func NewImageCommand(globalFlags *flag.GlobalFlagGroup) *cobra.Command {
 		flag.NewImageFlagGroup(), // container image specific flags
 		flag.NewLicenseFlagGroup(),
 		misconfFlagGroup,
-		flag.NewModuleFlagGroup(),
 		packageFlagGroup,
 		flag.NewRegistryFlagGroup(),
 		flag.NewRegoFlagGroup(),
@@ -294,7 +291,6 @@ func NewFilesystemCommand(globalFlags *flag.GlobalFlagGroup) *cobra.Command {
 		flag.NewDBFlagGroup(),
 		flag.NewLicenseFlagGroup(),
 		flag.NewMisconfFlagGroup(),
-		flag.NewModuleFlagGroup(),
 		flag.NewPackageFlagGroup(),
 		flag.NewRegistryFlagGroup(),
 		flag.NewRegoFlagGroup(),
@@ -358,7 +354,6 @@ func NewRootfsCommand(globalFlags *flag.GlobalFlagGroup) *cobra.Command {
 		flag.NewDBFlagGroup(),
 		flag.NewLicenseFlagGroup(),
 		flag.NewMisconfFlagGroup(),
-		flag.NewModuleFlagGroup(),
 		packageFlagGroup,
 		flag.NewRegistryFlagGroup(),
 		flag.NewRegoFlagGroup(),
@@ -420,7 +415,6 @@ func NewRepositoryCommand(globalFlags *flag.GlobalFlagGroup) *cobra.Command {
 		flag.NewDBFlagGroup(),
 		flag.NewLicenseFlagGroup(),
 		flag.NewMisconfFlagGroup(),
-		flag.NewModuleFlagGroup(),
 		flag.NewPackageFlagGroup(),
 		flag.NewRegistryFlagGroup(),
 		flag.NewRegoFlagGroup(),
@@ -542,7 +536,6 @@ func NewConfigCommand(globalFlags *flag.GlobalFlagGroup) *cobra.Command {
 		globalFlags,
 		cacheFlagGroup,
 		flag.NewMisconfFlagGroup(),
-		flag.NewModuleFlagGroup(),
 		flag.NewRegistryFlagGroup(),
 		flag.NewRegoFlagGroup(),
 		&flag.K8sFlagGroup{
@@ -588,77 +581,6 @@ func NewConfigCommand(globalFlags *flag.GlobalFlagGroup) *cobra.Command {
 	configFlags.AddFlags(cmd)
 	cmd.SetUsageTemplate(fmt.Sprintf(usageTemplate, configFlags.Usages(cmd)))
 
-	return cmd
-}
-
-func NewModuleCommand(globalFlags *flag.GlobalFlagGroup) *cobra.Command {
-	moduleFlags := &flag.Flags{
-		globalFlags,
-		flag.NewModuleFlagGroup(),
-	}
-
-	cmd := &cobra.Command{
-		Use:           "module subcommand",
-		Aliases:       []string{"m"},
-		GroupID:       groupManagement,
-		Short:         "Manage modules",
-		SilenceErrors: true,
-		SilenceUsage:  true,
-	}
-
-	// Add subcommands
-	cmd.AddCommand(
-		&cobra.Command{
-			Use:     "install [flags] REPOSITORY",
-			Aliases: []string{"i"},
-			Short:   "Install a module",
-			Args:    cobra.ExactArgs(1),
-			PreRunE: func(cmd *cobra.Command, _ []string) error {
-				if err := moduleFlags.Bind(cmd); err != nil {
-					return xerrors.Errorf("flag bind error: %w", err)
-				}
-				return nil
-			},
-			RunE: func(cmd *cobra.Command, args []string) error {
-				if len(args) != 1 {
-					return cmd.Help()
-				}
-
-				repo := args[0]
-				opts, err := moduleFlags.ToOptions(args)
-				if err != nil {
-					return xerrors.Errorf("flag error: %w", err)
-				}
-				return module.Install(cmd.Context(), opts.ModuleDir, repo, opts.Quiet, opts.RegistryOpts())
-			},
-		},
-		&cobra.Command{
-			Use:     "uninstall [flags] REPOSITORY",
-			Aliases: []string{"u"},
-			Short:   "Uninstall a module",
-			Args:    cobra.ExactArgs(1),
-			PreRunE: func(cmd *cobra.Command, _ []string) error {
-				if err := moduleFlags.Bind(cmd); err != nil {
-					return xerrors.Errorf("flag bind error: %w", err)
-				}
-				return nil
-			},
-			RunE: func(cmd *cobra.Command, args []string) error {
-				if len(args) != 1 {
-					return cmd.Help()
-				}
-
-				repo := args[0]
-				opts, err := moduleFlags.ToOptions(args)
-				if err != nil {
-					return xerrors.Errorf("flag error: %w", err)
-				}
-				return module.Uninstall(cmd.Context(), opts.ModuleDir, repo)
-			},
-		},
-	)
-	moduleFlags.AddFlags(cmd)
-	cmd.SetFlagErrorFunc(flagErrorFunc)
 	return cmd
 }
 
@@ -779,7 +701,6 @@ func NewVMCommand(globalFlags *flag.GlobalFlagGroup) *cobra.Command {
 		flag.NewCacheFlagGroup(),
 		flag.NewDBFlagGroup(),
 		misconfFlagGroup,
-		flag.NewModuleFlagGroup(),
 		packageFlagGroup,
 		reportFlagGroup,
 		flag.NewScanFlagGroup(),
