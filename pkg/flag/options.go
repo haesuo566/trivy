@@ -407,10 +407,8 @@ type Options struct {
 	ImageOptions
 	K8sOptions
 	LicenseOptions
-	MisconfOptions
 	PackageOptions
 	RegistryOptions
-	RegoOptions
 	RepoOptions
 	ReportOptions
 	ScanOptions
@@ -501,9 +499,8 @@ func (o *Options) RegistryOpts() ftypes.RegistryOptions {
 // FilterOpts returns options for filtering
 func (o *Options) FilterOpts() result.FilterOptions {
 	return result.FilterOptions{
-		Severities:         o.Severities,
-		IncludeNonFailures: o.IncludeNonFailures,
-		IgnoreFile:         o.IgnoreFile,
+		Severities:     o.Severities,
+		IgnoreFile:     o.IgnoreFile,
 		PolicyFile:         o.IgnorePolicy,
 		IgnoreLicenses:     o.IgnoredLicenses,
 		CacheDir:           o.CacheDir,
@@ -683,10 +680,8 @@ func HiddenFlags() []string {
 		NewImageFlagGroup(),
 		NewK8sFlagGroup(),
 		NewLicenseFlagGroup(),
-		NewMisconfFlagGroup(),
 		NewPackageFlagGroup(),
 		NewRegistryFlagGroup(),
-		NewRegoFlagGroup(),
 		NewReportFlagGroup(),
 		NewRepoFlagGroup(),
 		NewScanFlagGroup(),

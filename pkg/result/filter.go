@@ -51,7 +51,6 @@ func FilterResult(ctx context.Context, result *types.Result, ignoreConf IgnoreCo
 	// Convert dbTypes.Severity to string
 	severities := xslices.Map(opt.Severities, dbTypes.Severity.String)
 
-	filterMisconfigurations(result, severities, opt.IncludeNonFailures, ignoreConf)
 	filterLicenses(result, severities, opt.IgnoreLicenses, ignoreConf)
 
 	if opt.PolicyFile != "" {
@@ -63,44 +62,6 @@ func FilterResult(ctx context.Context, result *types.Result, ignoreConf IgnoreCo
 	sort.Sort(types.BySeverity(result.Vulnerabilities))
 
 	return nil
-}
-
-func filterMisconfigurations(result *types.Result, severities []string, includeNonFailures bool,
-	ignoreConfig IgnoreConfig) {
-	var filtered []types.DetectedMisconfiguration
-	result.MisconfSummary = new(types.MisconfSummary)
-
-	for _, misconf := range result.Misconfigurations {
-		// Filter by severity
-		if !slices.Contains(severities, misconf.Severity) {
-			continue
-		}
-
-		// Filter by ignore file
-		ids := append([]string{
-			misconf.ID,
-			misconf.AVDID,
-		}, misconf.Aliases...)
-		if f := ignoreConfig.MatchMisconfiguration(ids, result.Target); f != nil {
-			result.ModifiedFindings = append(result.ModifiedFindings,
-				types.NewModifiedFinding(misconf, types.FindingStatusIgnored, f.Statement, ignoreConfig.FilePath))
-			continue
-		}
-
-		// Count successes and failures
-		updateMisconfSummary(misconf.Status, result.MisconfSummary)
-
-		if misconf.Status != types.MisconfStatusFailure && !includeNonFailures {
-			continue
-		}
-		filtered = append(filtered, misconf)
-	}
-
-	result.Misconfigurations = filtered
-	if result.MisconfSummary.Empty() {
-		result.Misconfigurations = nil
-		result.MisconfSummary = nil
-	}
 }
 
 func filterLicenses(result *types.Result, severities, ignoreLicenseNames []string, ignoreConfig IgnoreConfig) {
@@ -138,15 +99,6 @@ func filterLicenses(result *types.Result, severities, ignoreLicenseNames []strin
 	result.Licenses = filtered
 }
 
-func updateMisconfSummary(status types.MisconfStatus, summary *types.MisconfSummary) {
-	switch status {
-	case types.MisconfStatusFailure:
-		summary.Failures++
-	case types.MisconfStatusPassed:
-		summary.Successes++
-	}
-}
-
 func applyPolicy(ctx context.Context, result *types.Result, policyFile string) error {
 	policy, err := os.ReadFile(policyFile)
 	if err != nil {
@@ -170,28 +122,6 @@ func applyPolicy(ctx context.Context, result *types.Result, policyFile string) e
 	}
 	result.Vulnerabilities = filteredVulns
 	result.ModifiedFindings = append(result.ModifiedFindings, modifiedVulns...)
-
-	// Misconfigurations
-	filteredMisconfs, modifiedMisconfs, err := filterFindingsByRego(ctx, query, result.Misconfigurations, policyFile)
-	if err != nil {
-		return err
-	}
-
-	for _, m := range modifiedMisconfs {
-		misconf, ok := m.Finding.(types.DetectedMisconfiguration)
-		if !ok {
-			continue
-		}
-		switch misconf.Status {
-		case types.MisconfStatusFailure:
-			result.MisconfSummary.Failures--
-		case types.MisconfStatusPassed:
-			result.MisconfSummary.Successes--
-		}
-	}
-
-	result.Misconfigurations = filteredMisconfs
-	result.ModifiedFindings = append(result.ModifiedFindings, modifiedMisconfs...)
 
 	// Licenses
 	filteredLicenses, modifiedLicenses, err := filterFindingsByRego(ctx, query, result.Licenses, policyFile)

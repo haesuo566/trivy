@@ -516,7 +516,6 @@ func (a Artifact) inspectLayer(ctx context.Context, layer types.Layer, disabled 
 		Repository:        result.Repository,
 		PackageInfos:      result.PackageInfos,
 		Applications:      result.Applications,
-		Misconfigurations: result.Misconfigurations,
 		Licenses:          result.Licenses,
 
 		// For Red Hat
@@ -588,7 +587,6 @@ func (a Artifact) inspectConfig(ctx context.Context, imageID string, osFound typ
 		Created:          config.Created.Time,
 		DockerVersion:    config.DockerVersion,
 		OS:               config.OS,
-		Misconfiguration: result.Misconfiguration,
 		HistoryPackages:  result.HistoryPackages,
 	}
 

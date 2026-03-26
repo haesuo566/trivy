@@ -42,8 +42,7 @@ func (a *applier) ApplyLayers(ctx context.Context, imageID string, layerKeys []s
 
 	imageInfo, _ := a.cache.GetArtifact(ctx, imageID) // nolint
 	mergedLayer.ImageConfig = ftypes.ImageConfigDetail{
-		Packages:         imageInfo.HistoryPackages,
-		Misconfiguration: imageInfo.Misconfiguration,
+		Packages: imageInfo.HistoryPackages,
 	}
 
 	// Fill layers info

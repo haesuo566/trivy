@@ -3,21 +3,17 @@ package local
 import (
 	"context"
 	"errors"
-	"fmt"
 	"slices"
-	"sort"
 	"strings"
 	"sync"
 
 	"github.com/samber/lo"
 	"golang.org/x/xerrors"
 
-	dbTypes "github.com/aquasecurity/trivy-db/pkg/types"
 	ospkgDetector "github.com/aquasecurity/trivy/pkg/detector/ospkg"
 	"github.com/aquasecurity/trivy/pkg/fanal/analyzer"
 	"github.com/aquasecurity/trivy/pkg/fanal/applier"
 	ftypes "github.com/aquasecurity/trivy/pkg/fanal/types"
-	"github.com/aquasecurity/trivy/pkg/iac/rego"
 	"github.com/aquasecurity/trivy/pkg/licensing"
 	"github.com/aquasecurity/trivy/pkg/log"
 	"github.com/aquasecurity/trivy/pkg/scan/langpkg"
@@ -86,13 +82,12 @@ func (s Service) Scan(ctx context.Context, targetName, artifactKey string, blobK
 	}
 
 	target := types.ScanTarget{
-		Name:              targetName,
-		OS:                detail.OS,
-		Repository:        lo.Ternary(lo.IsEmpty(options.Distro), detail.Repository, nil),
-		Packages:          mergePkgs(detail.Packages, detail.ImageConfig.Packages, options),
-		Applications:      detail.Applications,
-		Misconfigurations: mergeMisconfigurations(targetName, detail),
-		Licenses:          detail.Licenses,
+		Name:         targetName,
+		OS:           detail.OS,
+		Repository:   lo.Ternary(lo.IsEmpty(options.Distro), detail.Repository, nil),
+		Packages:     mergePkgs(detail.Packages, detail.ImageConfig.Packages, options),
+		Applications: detail.Applications,
+		Licenses:     detail.Licenses,
 	}
 
 	results, os, err := s.ScanTarget(ctx, target, options)
@@ -119,9 +114,6 @@ func (s Service) ScanTarget(ctx context.Context, target types.ScanTarget, option
 	}
 	target.OS.Eosl = eosl
 	results = append(results, vulnResults...)
-
-	// Store misconfigurations
-	results = append(results, s.misconfsToResults(target.Misconfigurations, options)...)
 
 	// Scan licenses
 	results = append(results, s.scanLicenses(target, options)...)
@@ -160,49 +152,6 @@ func (s Service) scanVulnerabilities(ctx context.Context, target types.ScanTarge
 	}
 
 	return results, eosl, nil
-}
-
-func (s Service) misconfsToResults(misconfs []ftypes.Misconfiguration, options types.ScanOptions) types.Results {
-	if !ShouldScanMisconfigOrRbac(options.Scanners) &&
-		!options.ImageConfigScanners.Enabled(types.MisconfigScanner) {
-		return nil
-	}
-
-	return s.MisconfsToResults(misconfs)
-}
-
-// MisconfsToResults is exported for trivy-plugin-aqua purposes only
-func (s Service) MisconfsToResults(misconfs []ftypes.Misconfiguration) types.Results {
-	log.Info("Detected config files", log.Int("num", len(misconfs)))
-	var results types.Results
-	for _, misconf := range misconfs {
-		log.Debug("Scanned config file", log.FilePath(misconf.FilePath))
-
-		var detected []types.DetectedMisconfiguration
-
-		for _, f := range misconf.Failures {
-			detected = append(detected, toDetectedMisconfiguration(f, dbTypes.SeverityCritical, types.MisconfStatusFailure, misconf.Layer))
-		}
-		for _, w := range misconf.Warnings {
-			detected = append(detected, toDetectedMisconfiguration(w, dbTypes.SeverityMedium, types.MisconfStatusFailure, misconf.Layer))
-		}
-		for _, w := range misconf.Successes {
-			detected = append(detected, toDetectedMisconfiguration(w, dbTypes.SeverityUnknown, types.MisconfStatusPassed, misconf.Layer))
-		}
-
-		results = append(results, types.Result{
-			Target:            misconf.FilePath,
-			Class:             types.ClassConfig,
-			Type:              misconf.FileType,
-			Misconfigurations: detected,
-		})
-	}
-
-	sort.Slice(results, func(i, j int) bool {
-		return results[i].Target < results[j].Target
-	})
-
-	return results
 }
 
 func (s Service) scanLicenses(target types.ScanTarget, options types.ScanOptions) types.Results {
@@ -310,65 +259,6 @@ func (s Service) scanFileLicenses(licenses []ftypes.LicenseFile, scanner licensi
 	}
 }
 
-func toDetectedMisconfiguration(res ftypes.MisconfResult, defaultSeverity dbTypes.Severity,
-	status types.MisconfStatus, layer ftypes.Layer) types.DetectedMisconfiguration {
-
-	severity := defaultSeverity
-	sev, err := dbTypes.NewSeverity(res.Severity)
-	if err != nil {
-		log.Warn("Unsupported severity", log.String("severity", res.Severity))
-	} else {
-		severity = sev
-	}
-
-	msg := strings.TrimSpace(res.Message)
-	if msg == "" {
-		msg = "No issues found"
-	}
-
-	var primaryURL string
-
-	// empty namespace implies a go rule from defsec, "builtin" refers to a built-in rego rule
-	// this ensures we don't generate bad links for custom policies
-	if res.Namespace == "" || rego.IsBuiltinNamespace(res.Namespace) {
-		primaryURL = fmt.Sprintf("https://avd.aquasec.com/misconfig/%s", strings.ToLower(res.ID))
-		res.References = append(res.References, primaryURL)
-	}
-
-	if primaryURL == "" && len(res.References) > 0 {
-		primaryURL = res.References[0]
-	}
-
-	return types.DetectedMisconfiguration{
-		ID:          res.ID,
-		AVDID:       res.AVDID,
-		Aliases:     res.Aliases,
-		Type:        res.Type,
-		Title:       res.Title,
-		Description: res.Description,
-		Message:     msg,
-		Resolution:  res.RecommendedActions,
-		Namespace:   res.Namespace,
-		Query:       res.Query,
-		Severity:    severity.String(),
-		PrimaryURL:  primaryURL,
-		References:  res.References,
-		Status:      status,
-		Layer:       layer,
-		Traces:      res.Traces,
-		CauseMetadata: ftypes.CauseMetadata{
-			Resource:      res.Resource,
-			Provider:      res.Provider,
-			Service:       res.Service,
-			StartLine:     res.StartLine,
-			EndLine:       res.EndLine,
-			Code:          res.Code,
-			Occurrences:   res.Occurrences,
-			RenderedCause: res.RenderedCause,
-		},
-	}
-}
-
 func toDetectedLicense(scanner licensing.Scanner, license, pkgName, filePath string) types.DetectedLicense {
 	var category ftypes.LicenseCategory
 	var severity, licenseText string
@@ -389,10 +279,6 @@ func toDetectedLicense(scanner licensing.Scanner, license, pkgName, filePath str
 		Text:       licenseText,
 		Confidence: 1.0,
 	}
-}
-
-func ShouldScanMisconfigOrRbac(scanners types.Scanners) bool {
-	return scanners.AnyEnabled(types.MisconfigScanner, types.RBACScanner)
 }
 
 func excludePackages(target *types.ScanTarget, options types.ScanOptions) {
@@ -473,14 +359,3 @@ func mergePkgs(pkgs, pkgsFromCommands []ftypes.Package, options types.ScanOption
 	return pkgs
 }
 
-// mergeMisconfigurations merges misconfigurations on container image config
-func mergeMisconfigurations(targetName string, detail ftypes.ArtifactDetail) []ftypes.Misconfiguration {
-	if detail.ImageConfig.Misconfiguration == nil {
-		return detail.Misconfigurations
-	}
-
-	// Append misconfigurations on container image config
-	misconf := detail.ImageConfig.Misconfiguration
-	misconf.FilePath = targetName // Set the target name to the file path as container image config is not a real file.
-	return append(detail.Misconfigurations, *misconf)
-}

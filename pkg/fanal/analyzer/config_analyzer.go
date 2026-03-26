@@ -9,7 +9,6 @@ import (
 
 	"github.com/aquasecurity/trivy/pkg/fanal/types"
 	"github.com/aquasecurity/trivy/pkg/log"
-	"github.com/aquasecurity/trivy/pkg/misconf"
 )
 
 var configAnalyzerConstructors = make(map[Type]configAnalyzerConstructor)
@@ -36,9 +35,8 @@ type ConfigAnalyzer interface {
 
 // ConfigAnalyzerOptions is used to initialize config analyzers
 type ConfigAnalyzerOptions struct {
-	FilePatterns         []string
-	DisabledAnalyzers    []Type
-	MisconfScannerOption misconf.ScannerOption
+	FilePatterns      []string
+	DisabledAnalyzers []Type
 }
 
 type ConfigAnalysisInput struct {
@@ -47,16 +45,12 @@ type ConfigAnalysisInput struct {
 }
 
 type ConfigAnalysisResult struct {
-	Misconfiguration *types.Misconfiguration
-	HistoryPackages  types.Packages
+	HistoryPackages types.Packages
 }
 
 func (r *ConfigAnalysisResult) Merge(newResult *ConfigAnalysisResult) {
 	if newResult == nil {
 		return
-	}
-	if newResult.Misconfiguration != nil {
-		r.Misconfiguration = newResult.Misconfiguration
 	}
 	if newResult.HistoryPackages != nil {
 		r.HistoryPackages = newResult.HistoryPackages

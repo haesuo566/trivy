@@ -10,7 +10,6 @@ import (
 	"github.com/aquasecurity/trivy/pkg/fanal/artifact"
 	"github.com/aquasecurity/trivy/pkg/fanal/types"
 	"github.com/aquasecurity/trivy/pkg/fanal/walker"
-	"github.com/aquasecurity/trivy/pkg/misconf"
 )
 
 func TestCalcKey(t *testing.T) {
@@ -22,8 +21,6 @@ func TestCalcKey(t *testing.T) {
 		skipFiles         []string
 		skipDirs          []string
 		patterns          []string
-		policy            []string
-		data              []string
 		detectionPriority types.DetectionPriority
 	}
 	tests := []struct {
@@ -143,34 +140,6 @@ func TestCalcKey(t *testing.T) {
 			want: "sha256:71abf09bf1422531e2838db692b80f9b9f48766f56b7d3d02aecdb36b019e103",
 		},
 		{
-			name: "with policy",
-			args: args{
-				key: "sha256:5c534be56eca62e756ef2ef51523feda0f19cd7c15bb0c015e3d6e3ae090bf6e",
-				analyzerVersions: analyzer.Versions{
-					Analyzers: map[string]int{
-						"alpine": 1,
-						"debian": 1,
-					},
-				},
-				policy: []string{"testdata/policy"},
-			},
-			want: "sha256:9602d5ef5af086112cc9fae8310390ed3fb79f4b309d8881b9807e379c8dfa57",
-		},
-		{
-			name: "with policy file",
-			args: args{
-				key: "sha256:5c534be56eca62e756ef2ef51523feda0f19cd7c15bb0c015e3d6e3ae090bf6e",
-				analyzerVersions: analyzer.Versions{
-					Analyzers: map[string]int{
-						"alpine": 1,
-						"debian": 1,
-					},
-				},
-				policy: []string{"testdata/policy/test.rego"},
-			},
-			want: "sha256:9602d5ef5af086112cc9fae8310390ed3fb79f4b309d8881b9807e379c8dfa57",
-		},
-		{
 			name: "skip files and dirs",
 			args: args{
 				key: "sha256:5c534be56eca62e756ef2ef51523feda0f19cd7c15bb0c015e3d6e3ae090bf6e",
@@ -182,7 +151,6 @@ func TestCalcKey(t *testing.T) {
 				},
 				skipFiles: []string{"app/deployment.yaml"},
 				skipDirs:  []string{"usr/java"},
-				policy:    []string{"testdata/policy"},
 			},
 			want: "sha256:363f70f4ee795f250873caea11c2fc94ef12945444327e7e2f8a99e3884695e0",
 		},
@@ -198,24 +166,9 @@ func TestCalcKey(t *testing.T) {
 				},
 				skipFiles:         []string{"app/deployment.yaml"},
 				skipDirs:          []string{"usr/java"},
-				policy:            []string{"testdata/policy"},
 				detectionPriority: types.PriorityComprehensive,
 			},
 			want: "sha256:2f1c898271e84f4382cd48ae7533069cc3dc656c2d688ac108f5db1a0d9fd393",
-		},
-		{
-			name: "with policy/non-existent dir",
-			args: args{
-				key: "sha256:5c534be56eca62e756ef2ef51523feda0f19cd7c15bb0c015e3d6e3ae090bf6e",
-				analyzerVersions: analyzer.Versions{
-					Analyzers: map[string]int{
-						"alpine": 1,
-						"debian": 1,
-					},
-				},
-				policy: []string{"policydir"},
-			},
-			wantErr: "file \"policydir\" stat error",
 		},
 	}
 	for _, tt := range tests {
@@ -223,11 +176,6 @@ func TestCalcKey(t *testing.T) {
 			artifactOpt := artifact.Option{
 				FilePatterns:      tt.args.patterns,
 				DetectionPriority: tt.args.detectionPriority,
-
-				MisconfScannerOption: misconf.ScannerOption{
-					PolicyPaths: tt.args.policy,
-					DataPaths:   tt.args.data,
-				},
 
 				WalkerOption: walker.Option{
 					SkipFiles: tt.args.skipFiles,

@@ -1,20 +1,14 @@
 package artifact
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
 	"errors"
-	"fmt"
-	"maps"
 	"os"
 	"slices"
-	"strings"
 
 	"github.com/samber/lo"
 	"github.com/spf13/viper"
 	"golang.org/x/xerrors"
-	"gopkg.in/yaml.v3"
 
 	"github.com/aquasecurity/trivy/pkg/cache"
 	"github.com/aquasecurity/trivy/pkg/commands/operation"
@@ -23,11 +17,8 @@ import (
 	ftypes "github.com/aquasecurity/trivy/pkg/fanal/types"
 	"github.com/aquasecurity/trivy/pkg/fanal/walker"
 	"github.com/aquasecurity/trivy/pkg/flag"
-	"github.com/aquasecurity/trivy/pkg/iac/rego"
 	"github.com/aquasecurity/trivy/pkg/log"
-	"github.com/aquasecurity/trivy/pkg/misconf"
 	"github.com/aquasecurity/trivy/pkg/notification"
-	"github.com/aquasecurity/trivy/pkg/policy"
 	pkgReport "github.com/aquasecurity/trivy/pkg/report"
 	"github.com/aquasecurity/trivy/pkg/result"
 	"github.com/aquasecurity/trivy/pkg/scan"
@@ -326,18 +317,6 @@ func disabledAnalyzers(opts flag.Options) []analyzer.Type {
 		analyzers = append(analyzers, analyzer.TypeLanguages...)
 	}
 
-	// Do not perform misconfiguration scanning when it is not specified.
-	if !opts.Scanners.AnyEnabled(types.MisconfigScanner, types.RBACScanner) {
-		analyzers = append(analyzers, analyzer.TypeConfigFiles...)
-	} else {
-		// Filter only enabled misconfiguration scanners
-		ma := disabledMisconfigAnalyzers(opts.MisconfigScanners)
-		analyzers = append(analyzers, ma...)
-
-		log.Debug("Enabling misconfiguration scanners",
-			log.Any("scanners", lo.Without(analyzer.TypeConfigFiles, ma...)))
-	}
-
 	// Scanning file headers and license files is expensive.
 	// It is performed only when '--scanners license' and '--license-full' are specified together.
 	if !opts.Scanners.Enabled(types.LicenseScanner) || !opts.LicenseFull {
@@ -352,11 +331,8 @@ func disabledAnalyzers(opts flag.Options) []analyzer.Type {
 		analyzers = append(analyzers, analyzer.TypeJar)
 	}
 
-	// Do not perform misconfiguration scanning on container image config
-	// when it is not specified.
-	if !opts.ImageConfigScanners.Enabled(types.MisconfigScanner) {
-		analyzers = append(analyzers, analyzer.TypeHistoryDockerfile)
-	}
+	// Misconfiguration scanning on container image config is removed, disable Dockerfile history analyzer.
+	analyzers = append(analyzers, analyzer.TypeHistoryDockerfile)
 
 	// Skip executable file analysis if Rekor isn't a specified SBOM source.
 	if !slices.Contains(opts.SBOMSources, types.SBOMSourceRekor) {
@@ -370,19 +346,6 @@ func disabledAnalyzers(opts flag.Options) []analyzer.Type {
 	}
 
 	return analyzers
-}
-
-func disabledMisconfigAnalyzers(included []analyzer.Type) []analyzer.Type {
-	_, missing := lo.Difference(analyzer.TypeConfigFiles, included)
-	if len(missing) > 0 {
-		log.Error(
-			"Invalid misconfiguration scanners provided, using default scanners",
-			log.Any("invalid_scanners", missing), log.Any("default_scanners", analyzer.TypeConfigFiles),
-		)
-		return nil
-	}
-
-	return lo.Without(analyzer.TypeConfigFiles, included...)
 }
 
 func (r *runner) initScannerConfig(ctx context.Context, opts flag.Options) (ScannerConfig, types.ScanOptions, error) {
@@ -405,16 +368,6 @@ func (r *runner) initScannerConfig(ctx context.Context, opts flag.Options) (Scan
 
 	if opts.Scanners.Enabled(types.VulnerabilityScanner) {
 		log.WithPrefix(log.PrefixVulnerability).Info("Vulnerability scanning is enabled")
-	}
-
-	// Misconfig ScannerOption is filled only when config scanning is enabled.
-	var configScannerOptions misconf.ScannerOption
-	if opts.Scanners.Enabled(types.MisconfigScanner) || opts.ImageConfigScanners.Enabled(types.MisconfigScanner) {
-		var err error
-		configScannerOptions, err = initMisconfScannerOption(ctx, opts)
-		if err != nil {
-			return ScannerConfig{}, types.ScanOptions{}, err
-		}
 	}
 
 	if opts.Scanners.Enabled(types.LicenseScanner) {
@@ -470,9 +423,6 @@ func (r *runner) initScannerConfig(ctx context.Context, opts flag.Options) (Scan
 				MaxImageSize: opts.MaxImageSize,
 			},
 
-			// For misconfiguration scanning
-			MisconfScannerOption: configScannerOptions,
-
 			// For license scanning
 			LicenseScannerOption: analyzer.LicenseScannerOption{
 				Full:                      opts.LicenseFull,
@@ -506,117 +456,3 @@ func (r *runner) scan(ctx context.Context, opts flag.Options, initializeService 
 	return report, nil
 }
 
-func initMisconfScannerOption(ctx context.Context, opts flag.Options) (misconf.ScannerOption, error) {
-	ctx = log.WithContextPrefix(ctx, log.PrefixMisconfiguration)
-	log.InfoContext(ctx, "Misconfiguration scanning is enabled")
-
-	var downloadedPolicyPath string
-	var disableEmbedded bool
-
-	c, err := policy.NewClient(opts.CacheDir, opts.Quiet, opts.MisconfOptions.ChecksBundleRepository)
-	if err != nil {
-		return misconf.ScannerOption{}, xerrors.Errorf("check client error: %w", err)
-	}
-
-	downloadedPolicyPath, err = operation.InitBuiltinChecks(ctx, c, opts.SkipCheckUpdate, opts.RegistryOpts())
-	if err != nil {
-		log.ErrorContext(ctx, "Falling back to embedded checks", log.Err(err))
-	} else {
-		log.DebugContext(ctx, "Checks successfully loaded from disk")
-		disableEmbedded = true
-	}
-
-	policyPaths := slices.Clone(opts.CheckPaths)
-	if downloadedPolicyPath != "" {
-		policyPaths = append(policyPaths, downloadedPolicyPath)
-	}
-
-	configSchemas, err := misconf.LoadConfigSchemas(opts.ConfigFileSchemas)
-	if err != nil {
-		return misconf.ScannerOption{}, xerrors.Errorf("load schemas error: %w", err)
-	}
-
-	ansibleExtraVars, err := resolveAnsibleExtraVars(opts.AnsibleExtraVars)
-	if err != nil {
-		log.DebugContext(ctx, "Failed to resolve Ansible extra-vars", log.Err(err))
-		ansibleExtraVars = make(map[string]any)
-	}
-
-	misconfOpts := misconf.ScannerOption{
-		Trace:                    opts.RegoOptions.Trace,
-		Namespaces:               append(opts.CheckNamespaces, rego.BuiltinNamespaces()...),
-		PolicyPaths:              policyPaths,
-		DataPaths:                opts.DataPaths,
-		HelmValues:               opts.HelmValues,
-		HelmValueFiles:           opts.HelmValueFiles,
-		HelmFileValues:           opts.HelmFileValues,
-		HelmStringValues:         opts.HelmStringValues,
-		HelmAPIVersions:          opts.HelmAPIVersions,
-		HelmKubeVersion:          opts.HelmKubeVersion,
-		TerraformTFVars:          opts.TerraformTFVars,
-		CloudFormationParamVars:  opts.CloudFormationParamVars,
-		K8sVersion:               opts.K8sVersion,
-		DisableEmbeddedPolicies:  disableEmbedded,
-		DisableEmbeddedLibraries: disableEmbedded,
-		IncludeDeprecatedChecks:  opts.IncludeDeprecatedChecks,
-		RegoErrorLimit:           opts.RegoOptions.ErrorLimit,
-		TfExcludeDownloaded:      opts.TfExcludeDownloaded,
-		RawConfigScanners:        opts.RawConfigScanners,
-		FilePatterns:             opts.FilePatterns,
-		ConfigFileSchemas:        configSchemas,
-		SkipFiles:                opts.SkipFiles,
-		SkipDirs:                 opts.SkipDirs,
-		AnsiblePlaybooks:         opts.AnsiblePlaybooks,
-		AnsibleInventories:       opts.AnsibleInventories,
-		AnsibleExtraVars:         ansibleExtraVars,
-	}
-
-	regoScanner, err := misconf.InitRegoScanner(misconfOpts)
-	if err != nil {
-		return misconf.ScannerOption{}, xerrors.Errorf("init Rego scanner: %w", err)
-	}
-
-	misconfOpts.RegoScanner = regoScanner
-	return misconfOpts, nil
-}
-
-func resolveAnsibleExtraVars(inputs []string) (map[string]any, error) {
-	result := make(map[string]any)
-
-	for _, input := range inputs {
-		var vars map[string]any
-
-		switch {
-		case strings.HasPrefix(input, "@"):
-			data, err := os.ReadFile(input[1:])
-			if err != nil {
-				return nil, fmt.Errorf("read extra-vars file %s: %w", input[1:], err)
-			}
-			trimmed := bytes.TrimSpace(data)
-			if len(trimmed) > 0 && trimmed[0] == '{' {
-				// parse as JSON object
-				if err := json.Unmarshal(trimmed, &vars); err != nil {
-					return nil, fmt.Errorf("parse extra-vars JSON file %s: %w", input[1:], err)
-				}
-			} else {
-				// parse as YAML
-				if err := yaml.Unmarshal(trimmed, &vars); err != nil {
-					return nil, fmt.Errorf("parse extra-vars YAML file %s: %w", input[1:], err)
-				}
-			}
-		case strings.Contains(input, "="):
-			kv := strings.SplitN(input, "=", 2)
-			var val string
-			if len(kv) == 2 {
-				val = kv[1]
-			}
-			vars = map[string]any{kv[0]: val}
-		default:
-			return nil, fmt.Errorf("invalid extra-vars input: %s", input)
-		}
-
-		maps.Copy(result, vars)
-	}
-
-	return result, nil
-}

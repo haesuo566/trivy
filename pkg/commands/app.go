@@ -17,7 +17,6 @@ import (
 	"github.com/aquasecurity/trivy/pkg/commands/artifact"
 	"github.com/aquasecurity/trivy/pkg/commands/auth"
 	"github.com/aquasecurity/trivy/pkg/commands/clean"
-	"github.com/aquasecurity/trivy/pkg/fanal/analyzer"
 	"github.com/aquasecurity/trivy/pkg/flag"
 	k8scommands "github.com/aquasecurity/trivy/pkg/k8s/commands"
 	"github.com/aquasecurity/trivy/pkg/log"
@@ -83,7 +82,6 @@ func NewApp() *cobra.Command {
 		NewFilesystemCommand(globalFlags),
 		NewRootfsCommand(globalFlags),
 		NewRepositoryCommand(globalFlags),
-		NewConfigCommand(globalFlags),
 		NewKubernetesCommand(globalFlags),
 		NewSBOMCommand(globalFlags),
 		NewVersionCommand(globalFlags),
@@ -190,22 +188,15 @@ func NewImageCommand(globalFlags *flag.GlobalFlagGroup) *cobra.Command {
 	packageFlagGroup := flag.NewPackageFlagGroup()
 	packageFlagGroup.IncludeDevDeps = nil // disable '--include-dev-deps'
 
-	misconfFlagGroup := flag.NewMisconfFlagGroup()
-	misconfFlagGroup.CloudformationParamVars = nil // disable '--cf-params'
-	misconfFlagGroup.TerraformTFVars = nil         // disable '--tf-vars'
-
 	imageFlags := flag.Flags{
 		globalFlags,
 		flag.NewCacheFlagGroup(),
 		flag.NewImageFlagGroup(), // container image specific flags
 		flag.NewLicenseFlagGroup(),
-		misconfFlagGroup,
 		packageFlagGroup,
 		flag.NewRegistryFlagGroup(),
-		flag.NewRegoFlagGroup(),
 		reportFlagGroup,
 		flag.NewScanFlagGroup(),
-
 	}
 
 	cmd := &cobra.Command{
@@ -276,13 +267,10 @@ func NewFilesystemCommand(globalFlags *flag.GlobalFlagGroup) *cobra.Command {
 		globalFlags,
 		cacheFlagGroup,
 		flag.NewLicenseFlagGroup(),
-		flag.NewMisconfFlagGroup(),
 		flag.NewPackageFlagGroup(),
 		flag.NewRegistryFlagGroup(),
-		flag.NewRegoFlagGroup(),
 		reportFlagGroup,
 		flag.NewScanFlagGroup(),
-
 	}
 
 	cmd := &cobra.Command{
@@ -337,13 +325,10 @@ func NewRootfsCommand(globalFlags *flag.GlobalFlagGroup) *cobra.Command {
 		globalFlags,
 		cacheFlagGroup,
 		flag.NewLicenseFlagGroup(),
-		flag.NewMisconfFlagGroup(),
 		packageFlagGroup,
 		flag.NewRegistryFlagGroup(),
-		flag.NewRegoFlagGroup(),
 		reportFlagGroup,
 		flag.NewScanFlagGroup(),
-
 	}
 
 	cmd := &cobra.Command{
@@ -396,13 +381,10 @@ func NewRepositoryCommand(globalFlags *flag.GlobalFlagGroup) *cobra.Command {
 		globalFlags,
 		flag.NewCacheFlagGroup(),
 		flag.NewLicenseFlagGroup(),
-		flag.NewMisconfFlagGroup(),
 		flag.NewPackageFlagGroup(),
 		flag.NewRegistryFlagGroup(),
-		flag.NewRegoFlagGroup(),
 		reportFlagGroup,
 		scanFlagGroup,
-
 		flag.NewRepoFlagGroup(),
 	}
 
@@ -441,83 +423,12 @@ func NewRepositoryCommand(globalFlags *flag.GlobalFlagGroup) *cobra.Command {
 	return cmd
 }
 
-func NewConfigCommand(globalFlags *flag.GlobalFlagGroup) *cobra.Command {
-	scanFlags := &flag.ScanFlagGroup{
-		// Enable only '--skip-dirs', '--skip-files', `--skip-version-check`
-		// and `--disable-telemetry`, disable other scan flags
-		SkipDirs:         flag.SkipDirsFlag.Clone(),
-		SkipFiles:        flag.SkipFilesFlag.Clone(),
-		FilePatterns:     flag.FilePatternsFlag.Clone(),
-		SkipVersionCheck: flag.SkipVersionCheckFlag.Clone(),
-		DisableTelemetry: flag.DisableTelemetryFlag.Clone(),
-	}
-
-	reportFlagGroup := flag.NewReportFlagGroup()
-	reportFlagGroup.ExitOnEOL = nil // disable '--exit-on-eol'
-
-	cacheFlagGroup := flag.NewCacheFlagGroup()
-	cacheFlagGroup.CacheBackend.Default = string(cache.TypeMemory)
-
-	configFlags := &flag.Flags{
-		globalFlags,
-		cacheFlagGroup,
-		flag.NewMisconfFlagGroup(),
-		flag.NewRegistryFlagGroup(),
-		flag.NewRegoFlagGroup(),
-		&flag.K8sFlagGroup{
-			// Keep only --k8s-version flag and disable others
-			K8sVersion: flag.K8sVersionFlag.Clone(),
-		},
-		reportFlagGroup,
-		scanFlags,
-	}
-
-	cmd := &cobra.Command{
-		Use:     "config [flags] DIR",
-		Aliases: []string{"conf"},
-		GroupID: groupScanning,
-		Short:   "Scan config files for misconfigurations",
-		PreRunE: func(cmd *cobra.Command, args []string) error {
-			if err := configFlags.Bind(cmd); err != nil {
-				return xerrors.Errorf("flag bind error: %w", err)
-			}
-			return validateArgs(cmd, args)
-		},
-		RunE: func(cmd *cobra.Command, args []string) error {
-			if err := configFlags.Bind(cmd); err != nil {
-				return xerrors.Errorf("flag bind error: %w", err)
-			}
-			options, err := configFlags.ToOptions(args)
-			if err != nil {
-				return xerrors.Errorf("flag error: %w", err)
-			}
-
-			// Disable OS and language analyzers
-			options.DisabledAnalyzers = append(analyzer.TypeOSes, analyzer.TypeLanguages...)
-
-			// Scan only for misconfigurations
-			options.Scanners = types.Scanners{types.MisconfigScanner}
-
-			return artifact.Run(cmd.Context(), options, artifact.TargetFilesystem)
-		},
-		SilenceErrors: true,
-		SilenceUsage:  true,
-	}
-	cmd.SetFlagErrorFunc(flagErrorFunc)
-	configFlags.AddFlags(cmd)
-	cmd.SetUsageTemplate(fmt.Sprintf(usageTemplate, configFlags.Usages(cmd)))
-
-	return cmd
-}
-
 func NewKubernetesCommand(globalFlags *flag.GlobalFlagGroup) *cobra.Command {
 	scanFlags := flag.NewScanFlagGroup()
 	scanners := flag.ScannersFlag.Clone()
 	// overwrite the default scanners
 	scanners.Values = xstrings.ToStringSlice(types.Scanners{
 		types.VulnerabilityScanner,
-		types.MisconfigScanner,
-		types.RBACScanner,
 	})
 	scanners.Default = scanners.Values
 	scanFlags.Scanners = scanners
@@ -536,10 +447,6 @@ func NewKubernetesCommand(globalFlags *flag.GlobalFlagGroup) *cobra.Command {
 	})
 	reportFlagGroup.Format = formatFlag
 
-	misconfFlagGroup := flag.NewMisconfFlagGroup()
-	misconfFlagGroup.CloudformationParamVars = nil // disable '--cf-params'
-	misconfFlagGroup.TerraformTFVars = nil         // disable '--tf-vars'
-
 	packageFlagGroup := flag.NewPackageFlagGroup()
 	packageFlagGroup.IncludeDevDeps = nil // disable '--include-dev-deps'
 
@@ -548,12 +455,9 @@ func NewKubernetesCommand(globalFlags *flag.GlobalFlagGroup) *cobra.Command {
 		flag.NewCacheFlagGroup(),
 		imageFlags,
 		flag.NewK8sFlagGroup(), // kubernetes-specific flags
-		misconfFlagGroup,
 		packageFlagGroup,
-		flag.NewRegoFlagGroup(),
 		reportFlagGroup,
 		scanFlags,
-
 		flag.NewRegistryFlagGroup(),
 	}
 
@@ -608,18 +512,12 @@ func NewVMCommand(globalFlags *flag.GlobalFlagGroup) *cobra.Command {
 	packageFlagGroup := flag.NewPackageFlagGroup()
 	packageFlagGroup.IncludeDevDeps = nil // disable '--include-dev-deps'
 
-	misconfFlagGroup := flag.NewMisconfFlagGroup()
-	misconfFlagGroup.CloudformationParamVars = nil // disable '--cf-params'
-	misconfFlagGroup.TerraformTFVars = nil         // disable '--tf-vars'
-
 	vmFlags := &flag.Flags{
 		globalFlags,
 		flag.NewCacheFlagGroup(),
-		misconfFlagGroup,
 		packageFlagGroup,
 		reportFlagGroup,
 		flag.NewScanFlagGroup(),
-
 		&flag.AWSFlagGroup{
 			Region: &flag.Flag[string]{
 				Name:       "aws-region",
@@ -886,10 +784,9 @@ func showVersion(cacheDir, outputFormat string, w io.Writer) error {
 }
 
 func validateArgs(cmd *cobra.Command, args []string) error {
-	// '--clear-cache', '--reset-checks-bundle' and '--generate-default-config' don't conduct the subsequent scanning
+	// '--clear-cache' and '--generate-default-config' don't conduct the subsequent scanning
 	if viper.GetBool(flag.ClearCacheFlag.ConfigName) ||
-		viper.GetBool(flag.GenerateDefaultConfigFlag.ConfigName) ||
-		viper.GetBool(flag.ResetChecksBundleFlag.ConfigName) {
+		viper.GetBool(flag.GenerateDefaultConfigFlag.ConfigName) {
 		return nil
 	}
 

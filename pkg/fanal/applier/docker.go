@@ -127,16 +127,6 @@ func ApplyLayers(layers []ftypes.BlobInfo) ftypes.ArtifactDetail {
 			nestedMap.SetByString(key, sep, app)
 		}
 
-		// Apply misconfigurations
-		for _, config := range layer.Misconfigurations {
-			config.Layer = ftypes.Layer{
-				Digest: layer.Digest,
-				DiffID: layer.DiffID,
-			}
-			key := fmt.Sprintf("%s/type:config", config.FilePath)
-			nestedMap.SetByString(key, sep, config)
-		}
-
 		// Apply license files
 		for _, license := range layer.Licenses {
 			license.Layer = ftypes.Layer{
@@ -156,8 +146,6 @@ func ApplyLayers(layers []ftypes.BlobInfo) ftypes.ArtifactDetail {
 			mergedLayer.Packages = append(mergedLayer.Packages, v.Packages...)
 		case ftypes.Application:
 			mergedLayer.Applications = append(mergedLayer.Applications, v)
-		case ftypes.Misconfiguration:
-			mergedLayer.Misconfigurations = append(mergedLayer.Misconfigurations, v)
 		case ftypes.LicenseFile:
 			mergedLayer.Licenses = append(mergedLayer.Licenses, v)
 		}

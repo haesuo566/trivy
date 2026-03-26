@@ -37,45 +37,40 @@ func TestFlag_Parse(t *testing.T) {
 				key: "scan.scanners",
 				value: []string{
 					"vuln",
-					"misconfig",
 				},
 			},
 			want: []string{
 				string(types.VulnerabilityScanner),
-				string(types.MisconfigScanner),
 			},
 		},
 		{
 			name: "env, string",
 			env: &kv{
 				key:   "TRIVY_SCANNERS",
-				value: "vuln,misconfig",
+				value: "vuln",
 			},
 			want: []string{
 				string(types.VulnerabilityScanner),
-				string(types.MisconfigScanner),
 			},
 		},
 		{
 			name: "flag, alias",
 			flag: &kv{
 				key:   "scan.security-checks",
-				value: "vulnerability,config",
+				value: "vulnerability",
 			},
 			want: []string{
 				string(types.VulnerabilityScanner),
-				string(types.MisconfigScanner),
 			},
 		},
 		{
 			name: "env, alias",
 			env: &kv{
 				key:   "TRIVY_SECURITY_CHECKS",
-				value: "vulnerability,config",
+				value: "vulnerability",
 			},
 			want: []string{
 				string(types.VulnerabilityScanner),
-				string(types.MisconfigScanner),
 			},
 		},
 		{

@@ -91,13 +91,6 @@ func (r Report) consolidate() ConsolidatedReport {
 		if vulnerabilityResource(m) {
 			vulnerabilities = append(vulnerabilities, m)
 		}
-		if misconfigsResource(m) {
-			res, ok := index[m.fullname()]
-			index[m.fullname()] = m
-			if ok {
-				index[m.fullname()].Results[0].Misconfigurations = append(index[m.fullname()].Results[0].Misconfigurations, res.Results[0].Misconfigurations...)
-			}
-		}
 	}
 
 	for _, v := range vulnerabilities {
@@ -138,13 +131,10 @@ type reports struct {
 	Columns []string
 }
 
-// SeparateMisconfigReports returns 3 reports based on scanners and components flags,
-// - misconfiguration report
-// - rbac report
-// - infra checks report
+// SeparateMisconfigReports returns reports based on scanners and components flags.
 func SeparateMisconfigReports(k8sReport Report, scanners types.Scanners) []reports {
 
-	var workloadMisconfig, infraMisconfig, rbacAssessment, workloadVulnerabilities, infraVulnerabilities, workloadResource []Resource
+	var workloadVulnerabilities, infraVulnerabilities, workloadResource []Resource
 	for _, resource := range k8sReport.Resources {
 		switch {
 		case vulnerabilityResource(resource) && !infraResource(resource):
@@ -153,19 +143,11 @@ func SeparateMisconfigReports(k8sReport Report, scanners types.Scanners) []repor
 			} else {
 				workloadVulnerabilities = append(workloadVulnerabilities, resource)
 			}
-		case scanners.Enabled(types.RBACScanner) && rbacResource(resource):
-			rbacAssessment = append(rbacAssessment, resource)
-		case infraResource(resource):
-			infraMisconfig = append(infraMisconfig, nodeKind(resource))
-		case scanners.Enabled(types.MisconfigScanner) &&
-			!rbacResource(resource):
-			workloadMisconfig = append(workloadMisconfig, resource)
 		}
 	}
 
 	var r []reports
 	workloadResource = append(workloadResource, workloadVulnerabilities...)
-	workloadResource = append(workloadResource, workloadMisconfig...)
 	if shouldAddToReport(scanners) {
 		workloadReport := Report{
 			SchemaVersion: 0,
@@ -177,30 +159,16 @@ func SeparateMisconfigReports(k8sReport Report, scanners types.Scanners) []repor
 			Report:  workloadReport,
 			Columns: WorkloadColumns(),
 		})
-
 	}
-	infraMisconfig = append(infraMisconfig, infraVulnerabilities...)
 	if shouldAddToReport(scanners) {
 		r = append(r, reports{
 			Report: Report{
 				SchemaVersion: 0,
 				ClusterName:   k8sReport.ClusterName,
-				Resources:     infraMisconfig,
+				Resources:     infraVulnerabilities,
 				name:          "Infra Assessment",
 			},
 			Columns: InfraColumns(),
-		})
-	}
-
-	if scanners.Enabled(types.RBACScanner) {
-		r = append(r, reports{
-			Report: Report{
-				SchemaVersion: 0,
-				ClusterName:   k8sReport.ClusterName,
-				Resources:     rbacAssessment,
-				name:          "RBAC Assessment",
-			},
-			Columns: RoleColumns(),
 		})
 	}
 
@@ -274,7 +242,6 @@ func (r Report) PrintErrors() {
 
 func shouldAddToReport(scanners types.Scanners) bool {
 	return scanners.AnyEnabled(
-		types.MisconfigScanner,
 		types.VulnerabilityScanner)
 }
 
@@ -285,10 +252,6 @@ func vulnerabilityResource(resource Resource) bool {
 		}
 	}
 	return false
-}
-
-func misconfigsResource(resource Resource) bool {
-	return len(resource.Results) > 0 && len(resource.Results[0].Misconfigurations) > 0
 }
 
 func nodeKind(resource Resource) Resource {

@@ -244,7 +244,6 @@ func (a Artifact) Inspect(ctx context.Context) (artifact.Reference, error) {
 		Repository:        result.Repository,
 		PackageInfos:      result.PackageInfos,
 		Applications:      result.Applications,
-		Misconfigurations: result.Misconfigurations,
 		Licenses:          result.Licenses,
 
 		// For Red Hat

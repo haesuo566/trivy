@@ -457,7 +457,6 @@ func getOptionsForArgs(t *testing.T, commandArgs []string, ignoreParseError bool
 	flags := flag.Flags{
 		flag.NewGlobalFlagGroup(),
 		flag.NewImageFlagGroup(),
-		flag.NewMisconfFlagGroup(),
 		flag.NewPackageFlagGroup(),
 		flag.NewReportFlagGroup(),
 		flag.NewScanFlagGroup(),

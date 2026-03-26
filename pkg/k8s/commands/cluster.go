@@ -5,14 +5,11 @@ import (
 
 	"golang.org/x/xerrors"
 
-	trivy_checks "github.com/aquasecurity/trivy-checks"
 	k8sArtifacts "github.com/aquasecurity/trivy-kubernetes/pkg/artifacts"
 	"github.com/aquasecurity/trivy-kubernetes/pkg/k8s"
 	"github.com/aquasecurity/trivy-kubernetes/pkg/trivyk8s"
-	"github.com/aquasecurity/trivy/pkg/commands/operation"
 	"github.com/aquasecurity/trivy/pkg/flag"
 	"github.com/aquasecurity/trivy/pkg/log"
-	"github.com/aquasecurity/trivy/pkg/policy"
 	"github.com/aquasecurity/trivy/pkg/types"
 )
 
@@ -37,16 +34,9 @@ func clusterRun(ctx context.Context, opts flag.Options, cluster k8s.Cluster) err
 			trivyk8s.WithIncludeKinds(opts.IncludeKinds),
 			trivyk8s.WithExcludeOwned(opts.ExcludeOwned),
 		}
-		if opts.Scanners.AnyEnabled(types.MisconfigScanner) && !opts.DisableNodeCollector {
-			artifacts, err = trivyk8s.New(cluster, k8sOpts...).ListArtifactAndNodeInfo(ctx, nodeCollectorOptions(ctx, opts)...)
-			if err != nil {
-				return xerrors.Errorf("get k8s artifacts with node info error: %w", err)
-			}
-		} else {
-			artifacts, err = trivyk8s.New(cluster, k8sOpts...).ListArtifacts(ctx)
-			if err != nil {
-				return xerrors.Errorf("get k8s artifacts error: %w", err)
-			}
+		artifacts, err = trivyk8s.New(cluster, k8sOpts...).ListArtifacts(ctx)
+		if err != nil {
+			return xerrors.Errorf("get k8s artifacts error: %w", err)
 		}
 	}
 
@@ -58,29 +48,4 @@ func clusterRun(ctx context.Context, opts flag.Options, cluster k8s.Cluster) err
 	return runner.run(ctx, artifacts)
 }
 
-func nodeCollectorOptions(ctx context.Context, opts flag.Options) []trivyk8s.NodeCollectorOption {
-	nodeCollectorOptions := []trivyk8s.NodeCollectorOption{
-		trivyk8s.WithScanJobNamespace(opts.NodeCollectorNamespace),
-		trivyk8s.WithIgnoreLabels(opts.ExcludeNodes),
-		trivyk8s.WithScanJobImageRef(opts.NodeCollectorImageRef),
-		trivyk8s.WithTolerations(opts.Tolerations),
-	}
-
-	ctx = log.WithContextPrefix(ctx, log.PrefixMisconfiguration)
-	c, _ := policy.NewClient(opts.CacheDir, opts.Quiet, opts.MisconfOptions.ChecksBundleRepository)
-	contentPath, err := operation.InitBuiltinChecks(ctx, c, opts.SkipCheckUpdate, opts.RegistryOpts())
-	if err != nil {
-		log.Error("Falling back to embedded checks", log.Err(err))
-		nodeCollectorOptions = append(nodeCollectorOptions,
-			[]trivyk8s.NodeCollectorOption{
-				trivyk8s.WithEmbeddedCommandFileSystem(trivy_checks.EmbeddedK8sCommandsFileSystem),
-				trivyk8s.WithEmbeddedNodeConfigFilesystem(trivy_checks.EmbeddedConfigCommandsFileSystem),
-			}...)
-	}
-
-	nodeCollectorOptions = append(nodeCollectorOptions, []trivyk8s.NodeCollectorOption{
-		trivyk8s.WithCommandPaths([]string{contentPath}),
-	}...)
-	return nodeCollectorOptions
-}
 

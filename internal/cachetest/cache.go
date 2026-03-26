@@ -104,19 +104,6 @@ func AssertBlobs(t *testing.T, c cache.Cache, wantBlobs []WantBlob) {
 		got, err := c.GetBlob(t.Context(), want.ID)
 		require.NoError(t, err, "blob not found")
 
-		for i := range got.Misconfigurations {
-			// suppress misconfiguration code block
-			for j := range got.Misconfigurations[i].Failures {
-				got.Misconfigurations[i].Failures[j].Code = types.Code{}
-			}
-			for j := range got.Misconfigurations[i].Successes {
-				got.Misconfigurations[i].Successes[j].Code = types.Code{}
-			}
-			for j := range got.Misconfigurations[i].Warnings {
-				got.Misconfigurations[i].Warnings[j].Code = types.Code{}
-			}
-		}
-
 		assert.Equal(t, want.BlobInfo, got, want.ID)
 	}
 }

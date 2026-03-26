@@ -11,7 +11,6 @@ import (
 	"github.com/aquasecurity/trivy/pkg/fanal/image/name"
 	"github.com/aquasecurity/trivy/pkg/fanal/types"
 	"github.com/aquasecurity/trivy/pkg/fanal/walker"
-	"github.com/aquasecurity/trivy/pkg/misconf"
 	"github.com/aquasecurity/trivy/pkg/sbom/core"
 )
 
@@ -45,7 +44,6 @@ type Option struct {
 	// For image scanning
 	ImageOption types.ImageOptions
 
-	MisconfScannerOption misconf.ScannerOption
 	LicenseScannerOption analyzer.LicenseScannerOption
 
 	WalkerOption walker.Option
@@ -58,16 +56,14 @@ func (o *Option) AnalyzerOptions() analyzer.AnalyzerOptions {
 		Parallel:             o.Parallel,
 		DisabledAnalyzers:    o.DisabledAnalyzers,
 		DetectionPriority:    o.DetectionPriority,
-		MisconfScannerOption: o.MisconfScannerOption,
 		LicenseScannerOption: o.LicenseScannerOption,
 	}
 }
 
 func (o *Option) ConfigAnalyzerOptions() analyzer.ConfigAnalyzerOptions {
 	return analyzer.ConfigAnalyzerOptions{
-		FilePatterns:         o.FilePatterns,
-		DisabledAnalyzers:    o.DisabledAnalyzers,
-		MisconfScannerOption: o.MisconfScannerOption,
+		FilePatterns:      o.FilePatterns,
+		DisabledAnalyzers: o.DisabledAnalyzers,
 	}
 }
 

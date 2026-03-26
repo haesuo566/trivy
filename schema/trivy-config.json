@@ -116,11 +116,7 @@
         },
         "image-config-scanners": {
           "items": {
-            "type": "string",
-            "enum": [
-              "misconfig",
-              "secret"
-            ]
+            "type": "string"
           },
           "type": "array",
           "description": "comma-separated list of what security issues to detect on container image configurations"
@@ -322,126 +318,6 @@
         "confidenceLevel": {
           "type": "number",
           "description": "specify license classifier's confidence level"
-        }
-      },
-      "type": "object"
-    },
-    "misconfiguration": {
-      "properties": {
-        "include-non-failures": {
-          "type": "boolean",
-          "description": "include successes, available with '--scanners misconfig'"
-        },
-        "checks-bundle-repository": {
-          "type": "string",
-          "description": "OCI registry URL to retrieve checks bundle from"
-        },
-        "helm": {
-          "properties": {
-            "set": {
-              "items": {
-                "type": "string"
-              },
-              "type": "array",
-              "description": "specify Helm values on the command line (can specify multiple or separate values with commas: key1=val1,key2=val2)"
-            },
-            "values": {
-              "items": {
-                "type": "string"
-              },
-              "type": "array",
-              "description": "specify paths to override the Helm values.yaml files"
-            },
-            "set-file": {
-              "items": {
-                "type": "string"
-              },
-              "type": "array",
-              "description": "specify Helm values from respective files specified via the command line (can specify multiple or separate values with commas: key1=path1,key2=path2)"
-            },
-            "set-string": {
-              "items": {
-                "type": "string"
-              },
-              "type": "array",
-              "description": "specify Helm string values on the command line (can specify multiple or separate values with commas: key1=val1,key2=val2)"
-            },
-            "api-versions": {
-              "items": {
-                "type": "string"
-              },
-              "type": "array",
-              "description": "Available API versions used for Capabilities.APIVersions. This flag is the same as the api-versions flag of the helm template command. (can specify multiple or separate values with commas: policy/v1/PodDisruptionBudget,apps/v1/Deployment)"
-            },
-            "kube-version": {
-              "type": "string",
-              "description": "Kubernetes version used for Capabilities.KubeVersion. This flag is the same as the kube-version flag of the helm template command."
-            }
-          },
-          "type": "object"
-        },
-        "terraform": {
-          "properties": {
-            "vars": {
-              "items": {
-                "type": "string"
-              },
-              "type": "array",
-              "description": "specify paths to override the Terraform tfvars files"
-            },
-            "exclude-downloaded-modules": {
-              "type": "boolean",
-              "description": "exclude misconfigurations for downloaded terraform modules"
-            }
-          },
-          "type": "object"
-        },
-        "cloudformation": {
-          "properties": {
-            "params": {
-              "items": {
-                "type": "string"
-              },
-              "type": "array",
-              "description": "specify paths to override the CloudFormation parameters files"
-            }
-          },
-          "type": "object"
-        },
-        "scanners": {
-          "items": {
-            "type": "string"
-          },
-          "type": "array",
-          "description": "comma-separated list of misconfig scanners to use for misconfiguration scanning"
-        },
-        "config-file-schemas": {
-          "items": {
-            "type": "string"
-          },
-          "type": "array",
-          "description": "specify paths to JSON configuration file schemas to determine that a file matches some configuration and pass the schema to Rego checks for type checking"
-        },
-        "render-cause": {
-          "items": {
-            "type": "string",
-            "enum": [
-              "terraform",
-              "ansible"
-            ]
-          },
-          "type": "array",
-          "description": "specify configuration types for which the rendered causes will be shown in the table report"
-        },
-        "raw-config-scanners": {
-          "items": {
-            "type": "string",
-            "enum": [
-              "terraform"
-            ]
-          },
-          "type": "array",
-          "description": "specify the types of scanners that will also scan raw configurations. For example, scanners will scan a non-adapted configuration into a shared state"
         }
       },
       "type": "object"
@@ -687,8 +563,6 @@
             "type": "string",
             "enum": [
               "vuln",
-              "misconfig",
-              "secret",
               "license"
             ]
           },

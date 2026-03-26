@@ -154,9 +154,6 @@ type ArtifactInfo struct {
 	DockerVersion string
 	OS            string
 
-	// Misconfiguration holds misconfiguration in container image config
-	Misconfiguration *Misconfiguration `json:",omitempty"`
-
 	// HistoryPackages are packages extracted from RUN instructions
 	HistoryPackages Packages `json:",omitempty"`
 }
@@ -178,7 +175,6 @@ type BlobInfo struct {
 	Repository        *Repository        `json:",omitempty"`
 	PackageInfos      []PackageInfo      `json:",omitempty"`
 	Applications      []Application      `json:",omitempty"`
-	Misconfigurations []Misconfiguration `json:",omitempty"`
 	Licenses          []LicenseFile      `json:",omitempty"`
 
 	// Red Hat distributions have build info per layer.
@@ -202,7 +198,6 @@ type ArtifactDetail struct {
 	Repository        *Repository        `json:",omitempty"`
 	Packages          Packages           `json:",omitempty"`
 	Applications      Applications       `json:",omitempty"`
-	Misconfigurations []Misconfiguration `json:",omitempty"`
 	Licenses          LicenseFiles       `json:",omitempty"`
 
 	// ImageConfig has information from container image config
@@ -216,7 +211,6 @@ func (a *ArtifactDetail) Sort() {
 	sort.Sort(a.Packages)
 	sort.Sort(a.Applications)
 	sort.Sort(a.Licenses)
-	// Misconfigurations will be sorted later
 }
 
 type LicenseFiles []LicenseFile
@@ -243,7 +237,5 @@ type ImageConfigDetail struct {
 	// Packages are packages extracted from RUN instructions in history
 	Packages []Package `json:",omitempty"`
 
-	// Misconfiguration holds misconfigurations in container image config
-	Misconfiguration *Misconfiguration `json:",omitempty"`
 }
 

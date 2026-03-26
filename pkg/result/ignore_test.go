@@ -17,7 +17,6 @@ func TestParseIgnoreFile(t *testing.T) {
 		// IDs in .trivyignore are treated as IDs for all scanners
 		// as it is unclear which type of security issue they are
 		assert.Len(t, got.Vulnerabilities, 8)
-		assert.Len(t, got.Misconfigurations, 8)
 		assert.Len(t, got.Licenses, 8)
 	})
 
@@ -26,7 +25,6 @@ func TestParseIgnoreFile(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, "testdata/.trivyignore.yaml", got.FilePath)
 		assert.Len(t, got.Vulnerabilities, 5)
-		assert.Len(t, got.Misconfigurations, 4)
 		assert.Len(t, got.Licenses, 5)
 	})
 

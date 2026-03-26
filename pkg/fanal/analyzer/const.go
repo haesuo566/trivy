@@ -2,7 +2,6 @@ package analyzer
 
 import (
 	"github.com/aquasecurity/trivy/pkg/fanal/types"
-	"github.com/aquasecurity/trivy/pkg/iac/detection"
 )
 
 // Type is an alias for types.AnalyzerType for backward compatibility
@@ -120,20 +119,6 @@ const (
 	// ============
 	TypeApkCommand        Type = "apk-command"
 	TypeHistoryDockerfile Type = "history-dockerfile"
-	// =================
-	// Structured Config
-	// =================
-	TypeAzureARM              Type = Type(detection.FileTypeAzureARM)
-	TypeCloudFormation        Type = Type(detection.FileTypeCloudFormation)
-	TypeDockerfile            Type = Type(detection.FileTypeDockerfile)
-	TypeHelm                  Type = Type(detection.FileTypeHelm)
-	TypeKubernetes            Type = Type(detection.FileTypeKubernetes)
-	TypeTerraform             Type = Type(detection.FileTypeTerraform)
-	TypeTerraformPlanJSON     Type = Type(detection.FileTypeTerraformPlanJSON)
-	TypeTerraformPlanSnapshot Type = Type(detection.FileTypeTerraformPlanSnapshot)
-	TypeYAML                  Type = Type(detection.FileTypeYAML)
-	TypeJSON                  Type = Type(detection.FileTypeJSON)
-	TypeAnsible               Type = Type(detection.FileTypeAnsible)
 
 	// ========
 	// License
@@ -253,18 +238,4 @@ var (
 		TypeComposerVendor,
 	}
 
-	// TypeConfigFiles has all config file analyzers
-	TypeConfigFiles = []Type{
-		TypeAzureARM,
-		TypeCloudFormation,
-		TypeDockerfile,
-		TypeHelm,
-		TypeKubernetes,
-		TypeTerraform,
-		TypeTerraformPlanJSON,
-		TypeTerraformPlanSnapshot,
-		TypeYAML,
-		TypeJSON,
-		TypeAnsible,
-	}
 )

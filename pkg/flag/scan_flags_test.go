@@ -9,7 +9,6 @@ import (
 
 	ftypes "github.com/aquasecurity/trivy/pkg/fanal/types"
 	"github.com/aquasecurity/trivy/pkg/flag"
-	"github.com/aquasecurity/trivy/pkg/types"
 )
 
 func TestScanFlagGroup_ToOptions(t *testing.T) {
@@ -34,18 +33,6 @@ func TestScanFlagGroup_ToOptions(t *testing.T) {
 			fields: fields{},
 			want: flag.ScanOptions{
 				Target: "alpine:latest",
-			},
-			assertion: require.NoError,
-		},
-		{
-			name: "happy path for configs",
-			args: []string{"alpine:latest"},
-			fields: fields{
-				scanners: "misconfig",
-			},
-			want: flag.ScanOptions{
-				Target:   "alpine:latest",
-				Scanners: types.Scanners{types.MisconfigScanner},
 			},
 			assertion: require.NoError,
 		},

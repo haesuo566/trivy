@@ -27,7 +27,6 @@ import (
 	"github.com/aquasecurity/trivy/pkg/purl"
 	"github.com/aquasecurity/trivy/pkg/sbom/core"
 	"github.com/aquasecurity/trivy/pkg/sbom/cyclonedx"
-	"github.com/aquasecurity/trivy/pkg/scan/local"
 	"github.com/aquasecurity/trivy/pkg/types"
 )
 
@@ -82,15 +81,6 @@ func (s *Scanner) Scan(ctx context.Context, artifactsData []*artifacts.Artifact)
 	}
 
 	var resources []report.Resource
-
-	// scans kubernetes artifacts as a scope of yaml files
-	if local.ShouldScanMisconfigOrRbac(s.opts.Scanners) {
-		misconfigs, err := s.scanMisconfigs(ctx, resourceArtifacts)
-		if err != nil {
-			return report.Report{}, xerrors.Errorf("scanning misconfigurations error: %w", err)
-		}
-		resources = append(resources, misconfigs...)
-	}
 
 	// scan images from kubernetes cluster in parallel
 	if s.opts.Scanners.AnyEnabled(types.VulnerabilityScanner) && !s.opts.SkipImages {
@@ -166,54 +156,6 @@ func (s *Scanner) scanVulns(ctx context.Context, artifact *artifacts.Artifact, o
 			return nil, xerrors.Errorf("filter error: %w", err)
 		}
 
-		resources = append(resources, resource)
-	}
-
-	return resources, nil
-}
-
-func (s *Scanner) scanMisconfigs(ctx context.Context, k8sArtifacts []*artifacts.Artifact) ([]report.Resource, error) {
-	dir, artifactsByFilename, err := generateTempDir(k8sArtifacts)
-	if err != nil {
-		return nil, xerrors.Errorf("failed to generate temp dir: %w", err)
-	}
-
-	s.opts.Target = dir
-	origCacheBackend := s.opts.CacheBackend
-	// Using an in-memory cache is safe since scanning k8s is not supported in client/server mode,
-	// and the cache created during file system scanning is removed after each scan.
-	s.opts.CacheBackend = string(cache.TypeMemory)
-
-	defer func() {
-		// remove config files
-		removeDir(dir)
-		// restore cache backend
-		s.opts.CacheBackend = origCacheBackend
-	}()
-
-	configReport, err := s.runner.ScanFilesystem(ctx, s.opts)
-
-	if err != nil {
-		return nil, xerrors.Errorf("failed to scan filesystem: %w", err)
-	}
-	resources := make([]report.Resource, 0, len(k8sArtifacts))
-
-	for _, res := range configReport.Results {
-		artifact := artifactsByFilename[res.Target]
-
-		singleReport := types.Report{
-			SchemaVersion: configReport.SchemaVersion,
-			CreatedAt:     configReport.CreatedAt,
-			ArtifactName:  res.Target,
-			ArtifactType:  configReport.ArtifactType,
-			Metadata:      configReport.Metadata,
-			Results:       types.Results{res},
-		}
-
-		resource, err := s.filter(ctx, singleReport, artifact)
-		if err != nil {
-			resource = report.CreateResource(artifact, singleReport, err)
-		}
 		resources = append(resources, resource)
 	}
 

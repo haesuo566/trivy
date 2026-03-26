@@ -20,7 +20,6 @@ import (
 	"github.com/aquasecurity/trivy/pkg/fanal/types"
 	"github.com/aquasecurity/trivy/pkg/licensing"
 	"github.com/aquasecurity/trivy/pkg/log"
-	"github.com/aquasecurity/trivy/pkg/misconf"
 	xio "github.com/aquasecurity/trivy/pkg/x/io"
 	xslices "github.com/aquasecurity/trivy/pkg/x/slices"
 )
@@ -48,7 +47,6 @@ type AnalyzerOptions struct {
 	FilePatterns         []string
 	DisabledAnalyzers    []Type
 	DetectionPriority    types.DetectionPriority
-	MisconfScannerOption misconf.ScannerOption
 	LicenseScannerOption LicenseScannerOption
 }
 
@@ -174,7 +172,6 @@ type AnalysisResult struct {
 	Repository           *types.Repository
 	PackageInfos         []types.PackageInfo
 	Applications         []types.Application
-	Misconfigurations    []types.Misconfiguration
 	Licenses             []types.LicenseFile
 	SystemInstalledFiles []string // A list of files installed by OS package manager
 
@@ -194,7 +191,7 @@ func NewAnalysisResult() *AnalysisResult {
 
 func (r *AnalysisResult) isEmpty() bool {
 	return lo.IsEmpty(r.OS) && r.Repository == nil && len(r.PackageInfos) == 0 && len(r.Applications) == 0 &&
-		len(r.Misconfigurations) == 0 && len(r.Licenses) == 0 && len(r.SystemInstalledFiles) == 0 &&
+		len(r.Licenses) == 0 && len(r.SystemInstalledFiles) == 0 &&
 		r.BuildInfo == nil && len(r.Digests) == 0
 }
 
@@ -219,14 +216,6 @@ func (r *AnalysisResult) Sort() {
 	for _, app := range r.Applications {
 		sort.Sort(app.Packages)
 	}
-
-	// Misconfigurations
-	sort.Slice(r.Misconfigurations, func(i, j int) bool {
-		if r.Misconfigurations[i].FileType != r.Misconfigurations[j].FileType {
-			return r.Misconfigurations[i].FileType < r.Misconfigurations[j].FileType
-		}
-		return r.Misconfigurations[i].FilePath < r.Misconfigurations[j].FilePath
-	})
 
 	// License files
 	sort.Slice(r.Licenses, func(i, j int) bool {
@@ -270,7 +259,6 @@ func (r *AnalysisResult) Merge(newResult *AnalysisResult) {
 		r.Digests = lo.Assign(r.Digests, newResult.Digests)
 	}
 
-	r.Misconfigurations = append(r.Misconfigurations, newResult.Misconfigurations...)
 	r.Licenses = append(r.Licenses, newResult.Licenses...)
 	r.SystemInstalledFiles = append(r.SystemInstalledFiles, newResult.SystemInstalledFiles...)
 

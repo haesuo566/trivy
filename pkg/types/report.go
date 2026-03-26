@@ -73,7 +73,6 @@ const (
 	ClassUnknown     ResultClass = "unknown"
 	ClassOSPkg       ResultClass = "os-pkgs"      // For detected packages and vulnerabilities in OS packages
 	ClassLangPkg     ResultClass = "lang-pkgs"    // For detected packages and vulnerabilities in language-specific packages
-	ClassConfig      ResultClass = "config"       // For detected misconfigurations
 	ClassLicense     ResultClass = "license"      // For detected package licenses
 	ClassLicenseFile ResultClass = "license-file" // For detected licenses in files
 
@@ -101,10 +100,8 @@ type Result struct {
 	Class             ResultClass                `json:"Class,omitempty"`
 	Type              ftypes.TargetType          `json:"Type,omitempty"`
 	Packages          []ftypes.Package           `json:"Packages,omitempty"`
-	Vulnerabilities   []DetectedVulnerability    `json:"Vulnerabilities,omitempty"`
-	MisconfSummary    *MisconfSummary            `json:"MisconfSummary,omitempty"`
-	Misconfigurations []DetectedMisconfiguration `json:"Misconfigurations,omitempty"`
-	Licenses          []DetectedLicense          `json:"Licenses,omitempty"`
+	Vulnerabilities []DetectedVulnerability `json:"Vulnerabilities,omitempty"`
+	Licenses        []DetectedLicense      `json:"Licenses,omitempty"`
 
 	// ModifiedFindings holds a list of findings that have been modified from their original state.
 	// This can include vulnerabilities that have been marked as ignored, not affected, or have had
@@ -113,29 +110,15 @@ type Result struct {
 }
 
 func (r *Result) IsEmpty() bool {
-	return len(r.Packages) == 0 && len(r.Vulnerabilities) == 0 && len(r.Misconfigurations) == 0 &&
+	return len(r.Packages) == 0 && len(r.Vulnerabilities) == 0 &&
 		len(r.Licenses) == 0 && len(r.ModifiedFindings) == 0
 }
 
-type MisconfSummary struct {
-	Successes int
-	Failures  int
-}
-
-func (s MisconfSummary) Empty() bool {
-	return s.Successes == 0 && s.Failures == 0
-}
-
-// Failed returns whether the result includes any vulnerabilities, misconfigurations or licenses
+// Failed returns whether the result includes any vulnerabilities or licenses
 func (results Results) Failed() bool {
 	for _, r := range results {
 		if len(r.Vulnerabilities) > 0 {
 			return true
-		}
-		for _, m := range r.Misconfigurations {
-			if m.Status == MisconfStatusFailure {
-				return true
-			}
 		}
 		if len(r.Licenses) > 0 {
 			return true

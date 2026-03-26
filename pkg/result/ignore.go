@@ -143,9 +143,8 @@ func (f *IgnoreFindings) Prune(ctx context.Context) {
 // IgnoreConfig represents the structure of .trivyignore.yaml.
 type IgnoreConfig struct {
 	FilePath          string
-	Vulnerabilities   IgnoreFindings `yaml:"vulnerabilities"`
-	Misconfigurations IgnoreFindings `yaml:"misconfigurations"`
-	Licenses          IgnoreFindings `yaml:"licenses"`
+	Vulnerabilities IgnoreFindings `yaml:"vulnerabilities"`
+	Licenses        IgnoreFindings `yaml:"licenses"`
 }
 
 func (c *IgnoreConfig) MatchVulnerability(vulnID, filePath, pkgPath string, pkg *packageurl.PackageURL) *IgnoreFinding {
@@ -155,15 +154,6 @@ func (c *IgnoreConfig) MatchVulnerability(vulnID, filePath, pkgPath string, pkg 
 	}
 	for _, p := range paths {
 		if f := c.Vulnerabilities.Match(vulnID, p, pkg); f != nil {
-			return f
-		}
-	}
-	return nil
-}
-
-func (c *IgnoreConfig) MatchMisconfiguration(ids []string, filePath string) *IgnoreFinding {
-	for _, id := range ids {
-		if f := c.Misconfigurations.Match(id, filePath, nil); f != nil {
 			return f
 		}
 	}
@@ -229,14 +219,12 @@ func ParseIgnoreFile(ctx context.Context, ignoreFile string) (IgnoreConfig, erro
 		// IDs in .trivyignore are treated as IDs for all scanners
 		// as it is unclear which type of security issue they are
 		conf = IgnoreConfig{
-			Vulnerabilities:   ignoredFindings,
-			Misconfigurations: ignoredFindings,
-			Licenses:          ignoredFindings,
+			Vulnerabilities: ignoredFindings,
+			Licenses:        ignoredFindings,
 		}
 	}
 
 	conf.Vulnerabilities.Prune(ctx)
-	conf.Misconfigurations.Prune(ctx)
 	conf.Licenses.Prune(ctx)
 	conf.FilePath = filepath.ToSlash(filepath.Clean(ignoreFile))
 

@@ -37,12 +37,6 @@ const (
 	// VulnerabilityScanner is the scanner of vulnerabilities
 	VulnerabilityScanner Scanner = "vuln"
 
-	// MisconfigScanner is the scanner of misconfigurations
-	MisconfigScanner Scanner = "misconfig"
-
-	// RBACScanner is the scanner of rbac assessment
-	RBACScanner Scanner = "rbac"
-
 	// LicenseScanner is the scanner of licenses
 	LicenseScanner Scanner = "license"
 )
@@ -55,17 +49,12 @@ var (
 
 	AllScanners = Scanners{
 		VulnerabilityScanner,
-		MisconfigScanner,
-		RBACScanner,
 		LicenseScanner,
 		NoneScanner,
 	}
 
 	// AllImageConfigScanners has a list of available scanners on container image config.
-	// The container image in container registries consists of manifest, config and layers.
-	// Trivy is also able to detect security issues on the image config.
 	AllImageConfigScanners = Scanners{
-		MisconfigScanner,
 		NoneScanner,
 	}
 )
@@ -92,8 +81,7 @@ type ScanTarget struct {
 	Repository        *types.Repository
 	Packages          types.Packages
 	Applications      []types.Application
-	Misconfigurations []types.Misconfiguration
-	Licenses          []types.LicenseFile
+	Licenses []types.LicenseFile
 }
 
 // ScanOptions holds the attributes for scanning vulnerabilities/licenses

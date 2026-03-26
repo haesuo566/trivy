@@ -19,7 +19,6 @@ import (
 	"github.com/aquasecurity/trivy/pkg/fanal/artifact/vm"
 	"github.com/aquasecurity/trivy/pkg/fanal/types"
 	"github.com/aquasecurity/trivy/pkg/fanal/walker"
-	"github.com/aquasecurity/trivy/pkg/misconf"
 	xio "github.com/aquasecurity/trivy/pkg/x/io"
 
 	_ "github.com/aquasecurity/trivy/pkg/fanal/analyzer/os/alpine"
@@ -105,7 +104,6 @@ func TestArtifact_Inspect(t *testing.T) {
 		target            string
 		rootDir           string
 		artifactOpt       artifact.Option
-		scannerOpt        misconf.ScannerOption
 		disabledAnalyzers []analyzer.Type
 		disabledHandlers  []types.HandlerType
 		wantBlobs         []cachetest.WantBlob

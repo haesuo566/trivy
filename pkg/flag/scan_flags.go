@@ -40,7 +40,6 @@ var (
 		}),
 		Values: xstrings.ToStringSlice(types.Scanners{
 			types.VulnerabilityScanner,
-			types.MisconfigScanner,
 			types.LicenseScanner,
 		}),
 		ValueNormalize: func(ss []string) []string {
@@ -48,11 +47,6 @@ var (
 				switch s {
 				case "vulnerability":
 					return string(types.VulnerabilityScanner)
-				case "misconf", "misconfiguration":
-					return string(types.MisconfigScanner)
-				case "config":
-					log.Warn("'--scanners config' is deprecated. Use '--scanners misconfig' instead. See https://github.com/aquasecurity/trivy/discussions/5586 for the detail.")
-					return string(types.MisconfigScanner)
 				}
 				return s
 			})

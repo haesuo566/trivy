@@ -71,7 +71,7 @@ func (m *ModifiedFinding) UnmarshalJSON(data []byte) error {
 	case FindingTypeVulnerability:
 		m.Finding, err = unmarshalFinding[DetectedVulnerability](aux.Finding)
 	case FindingTypeMisconfiguration:
-		m.Finding, err = unmarshalFinding[DetectedMisconfiguration](aux.Finding)
+		return xerrors.Errorf("misconfiguration findings are no longer supported")
 	case FindingTypeLicense:
 		m.Finding, err = unmarshalFinding[DetectedLicense](aux.Finding)
 	default:
