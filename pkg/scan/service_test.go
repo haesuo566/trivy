@@ -8,8 +8,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/aquasecurity/trivy-db/pkg/db"
-	"github.com/aquasecurity/trivy/internal/dbtest"
 	"github.com/aquasecurity/trivy/internal/testutil"
 	"github.com/aquasecurity/trivy/pkg/cache"
 	"github.com/aquasecurity/trivy/pkg/clock"
@@ -128,9 +126,6 @@ func TestScanner_ScanArtifact(t *testing.T) {
 			// Set fake UUID v7 for testing
 			uuid.SetFakeUUIDV7(t, "017b7d41-e09f-7000-80ea-%012d")
 
-			// Initialize DB
-			_ = dbtest.InitDB(t, tt.fixtures)
-			defer db.Close()
 
 			// Load test image
 			img, err := image.NewArchiveImage(tt.imagePath)

@@ -25,18 +25,13 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/xeipuuv/gojsonschema"
 
-	"github.com/aquasecurity/trivy-db/pkg/metadata"
-	"github.com/aquasecurity/trivy/internal/dbtest"
 	"github.com/aquasecurity/trivy/internal/testutil"
 	"github.com/aquasecurity/trivy/pkg/clock"
 	"github.com/aquasecurity/trivy/pkg/commands"
-	"github.com/aquasecurity/trivy/pkg/db"
 	"github.com/aquasecurity/trivy/pkg/types"
 	"github.com/aquasecurity/trivy/pkg/uuid"
 	"github.com/aquasecurity/trivy/pkg/vex/repo"
 	xslices "github.com/aquasecurity/trivy/pkg/x/slices"
-
-	_ "modernc.org/sqlite"
 )
 
 var update = flag.Bool("update", false, "update golden files")
@@ -146,34 +141,6 @@ const (
 	goldenCountPlugin020               = "testdata/count-0.2.0-plugin.txt.golden"
 	goldenCountPlugin010WithBeforeFlag = "testdata/count-0.1.0-plugin-with-before-flag.txt.golden"
 )
-
-func initDB(t *testing.T) string {
-	fixtureDir := filepath.Join("testdata", "fixtures", "db")
-	entries, err := os.ReadDir(fixtureDir)
-	require.NoError(t, err)
-
-	var fixtures []string
-	for _, entry := range entries {
-		if entry.IsDir() {
-			continue
-		}
-		fixtures = append(fixtures, filepath.Join(fixtureDir, entry.Name()))
-	}
-
-	cacheDir := dbtest.InitDB(t, fixtures)
-	defer dbtest.Close()
-
-	err = metadata.NewClient(db.Dir(cacheDir)).Update(metadata.Metadata{
-		Version:      db.SchemaVersion,
-		NextUpdate:   time.Now().Add(24 * time.Hour),
-		UpdatedAt:    time.Now(),
-		DownloadedAt: time.Now(),
-	})
-	require.NoError(t, err)
-
-	dbtest.InitJavaDB(t, cacheDir)
-	return cacheDir
-}
 
 func initVEXRepository(t *testing.T, homeDir, cacheDir string) {
 	t.Helper()

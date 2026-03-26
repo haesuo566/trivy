@@ -404,7 +404,6 @@ type Options struct {
 	AWSOptions
 	CacheOptions
 	CleanOptions
-	DBOptions
 	ImageOptions
 	K8sOptions
 	LicenseOptions
@@ -681,7 +680,6 @@ func HiddenFlags() []string {
 		NewGlobalFlagGroup(),
 		NewCacheFlagGroup(),
 		NewCleanFlagGroup(),
-		NewDBFlagGroup(),
 		NewImageFlagGroup(),
 		NewK8sFlagGroup(),
 		NewLicenseFlagGroup(),

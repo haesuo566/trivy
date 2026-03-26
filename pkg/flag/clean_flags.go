@@ -12,16 +12,6 @@ var (
 		ConfigName: "clean.scan-cache",
 		Usage:      "remove scan cache (container and VM image analysis results)",
 	}
-	CleanVulnerabilityDB = Flag[bool]{
-		Name:       "vuln-db",
-		ConfigName: "clean.vuln-db",
-		Usage:      "remove vulnerability database",
-	}
-	CleanJavaDB = Flag[bool]{
-		Name:       "java-db",
-		ConfigName: "clean.java-db",
-		Usage:      "remove Java database",
-	}
 	CleanChecksBundle = Flag[bool]{
 		Name:       "checks-bundle",
 		ConfigName: "clean.checks-bundle",
@@ -30,28 +20,22 @@ var (
 )
 
 type CleanFlagGroup struct {
-	CleanAll             *Flag[bool]
-	CleanScanCache       *Flag[bool]
-	CleanVulnerabilityDB *Flag[bool]
-	CleanJavaDB          *Flag[bool]
-	CleanChecksBundle    *Flag[bool]
+	CleanAll          *Flag[bool]
+	CleanScanCache    *Flag[bool]
+	CleanChecksBundle *Flag[bool]
 }
 
 type CleanOptions struct {
-	CleanAll             bool
-	CleanScanCache       bool
-	CleanVulnerabilityDB bool
-	CleanJavaDB          bool
-	CleanChecksBundle    bool
+	CleanAll          bool
+	CleanScanCache    bool
+	CleanChecksBundle bool
 }
 
 func NewCleanFlagGroup() *CleanFlagGroup {
 	return &CleanFlagGroup{
-		CleanAll:             CleanAll.Clone(),
-		CleanScanCache:       CleanScanCache.Clone(),
-		CleanVulnerabilityDB: CleanVulnerabilityDB.Clone(),
-		CleanJavaDB:          CleanJavaDB.Clone(),
-		CleanChecksBundle:    CleanChecksBundle.Clone(),
+		CleanAll:          CleanAll.Clone(),
+		CleanScanCache:    CleanScanCache.Clone(),
+		CleanChecksBundle: CleanChecksBundle.Clone(),
 	}
 }
 
@@ -63,19 +47,15 @@ func (fg *CleanFlagGroup) Flags() []Flagger {
 	return []Flagger{
 		fg.CleanAll,
 		fg.CleanScanCache,
-		fg.CleanVulnerabilityDB,
-		fg.CleanJavaDB,
 		fg.CleanChecksBundle,
 	}
 }
 
 func (fg *CleanFlagGroup) ToOptions(opts *Options) error {
 	opts.CleanOptions = CleanOptions{
-		CleanAll:             fg.CleanAll.Value(),
-		CleanVulnerabilityDB: fg.CleanVulnerabilityDB.Value(),
-		CleanJavaDB:          fg.CleanJavaDB.Value(),
-		CleanChecksBundle:    fg.CleanChecksBundle.Value(),
-		CleanScanCache:       fg.CleanScanCache.Value(),
+		CleanAll:          fg.CleanAll.Value(),
+		CleanChecksBundle: fg.CleanChecksBundle.Value(),
+		CleanScanCache:    fg.CleanScanCache.Value(),
 	}
 	return nil
 }

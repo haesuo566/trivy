@@ -10,7 +10,6 @@ import (
 
 	dbTypes "github.com/aquasecurity/trivy-db/pkg/types"
 	"github.com/aquasecurity/trivy-db/pkg/vulnsrc/vulnerability"
-	"github.com/aquasecurity/trivy/internal/dbtest"
 	"github.com/aquasecurity/trivy/pkg/clock"
 	"github.com/aquasecurity/trivy/pkg/detector/ospkg/redhat"
 	ftypes "github.com/aquasecurity/trivy/pkg/fanal/types"
@@ -455,8 +454,6 @@ func TestScanner_Detect(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			dbtest.InitDB(t, tt.fixtures)
-			defer func() { _ = dbtest.Close() }()
 
 			s := redhat.NewScanner()
 			got, err := s.Detect(t.Context(), tt.args.osVer, nil, tt.args.pkgs)

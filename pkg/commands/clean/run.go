@@ -5,7 +5,6 @@ import (
 
 	"golang.org/x/xerrors"
 
-	"github.com/aquasecurity/trivy/pkg/db"
 	"github.com/aquasecurity/trivy/pkg/flag"
 	"github.com/aquasecurity/trivy/pkg/log"
 	"github.com/aquasecurity/trivy/pkg/policy"
@@ -15,22 +14,14 @@ func Run(ctx context.Context, opts flag.Options) error {
 	ctx, cancel := context.WithTimeout(ctx, opts.Timeout)
 	defer cancel()
 
-	if !opts.CleanAll && !opts.CleanScanCache && !opts.CleanVulnerabilityDB && !opts.CleanJavaDB &&
+	if !opts.CleanAll && !opts.CleanScanCache &&
 		!opts.CleanChecksBundle {
 		return xerrors.New("no clean option is specified")
 	}
 
 	if opts.CleanAll {
 		opts.CleanScanCache = true
-		opts.CleanVulnerabilityDB = true
-		opts.CleanJavaDB = true
 		opts.CleanChecksBundle = true
-	}
-
-	if opts.CleanVulnerabilityDB {
-		if err := cleanVulnerabilityDB(ctx, opts); err != nil {
-			return xerrors.Errorf("vuln db clean error: %w", err)
-		}
 	}
 
 	if opts.CleanChecksBundle {
@@ -39,15 +30,6 @@ func Run(ctx context.Context, opts flag.Options) error {
 		}
 	}
 
-	return nil
-}
-
-func cleanVulnerabilityDB(ctx context.Context, opts flag.Options) error {
-	log.InfoContext(ctx, "Removing vulnerability database...")
-	if err := db.NewClient(db.Dir(opts.CacheDir), true).Clear(ctx); err != nil {
-		return xerrors.Errorf("clear vulnerability database: %w", err)
-
-	}
 	return nil
 }
 

@@ -197,7 +197,6 @@ func NewImageCommand(globalFlags *flag.GlobalFlagGroup) *cobra.Command {
 	imageFlags := flag.Flags{
 		globalFlags,
 		flag.NewCacheFlagGroup(),
-		flag.NewDBFlagGroup(),
 		flag.NewImageFlagGroup(), // container image specific flags
 		flag.NewLicenseFlagGroup(),
 		misconfFlagGroup,
@@ -276,7 +275,6 @@ func NewFilesystemCommand(globalFlags *flag.GlobalFlagGroup) *cobra.Command {
 	fsFlags := flag.Flags{
 		globalFlags,
 		cacheFlagGroup,
-		flag.NewDBFlagGroup(),
 		flag.NewLicenseFlagGroup(),
 		flag.NewMisconfFlagGroup(),
 		flag.NewPackageFlagGroup(),
@@ -338,7 +336,6 @@ func NewRootfsCommand(globalFlags *flag.GlobalFlagGroup) *cobra.Command {
 	rootfsFlags := flag.Flags{
 		globalFlags,
 		cacheFlagGroup,
-		flag.NewDBFlagGroup(),
 		flag.NewLicenseFlagGroup(),
 		flag.NewMisconfFlagGroup(),
 		packageFlagGroup,
@@ -398,7 +395,6 @@ func NewRepositoryCommand(globalFlags *flag.GlobalFlagGroup) *cobra.Command {
 	repoFlags := flag.Flags{
 		globalFlags,
 		flag.NewCacheFlagGroup(),
-		flag.NewDBFlagGroup(),
 		flag.NewLicenseFlagGroup(),
 		flag.NewMisconfFlagGroup(),
 		flag.NewPackageFlagGroup(),
@@ -550,7 +546,6 @@ func NewKubernetesCommand(globalFlags *flag.GlobalFlagGroup) *cobra.Command {
 	k8sFlags := &flag.Flags{
 		globalFlags,
 		flag.NewCacheFlagGroup(),
-		flag.NewDBFlagGroup(),
 		imageFlags,
 		flag.NewK8sFlagGroup(), // kubernetes-specific flags
 		misconfFlagGroup,
@@ -620,7 +615,6 @@ func NewVMCommand(globalFlags *flag.GlobalFlagGroup) *cobra.Command {
 	vmFlags := &flag.Flags{
 		globalFlags,
 		flag.NewCacheFlagGroup(),
-		flag.NewDBFlagGroup(),
 		misconfFlagGroup,
 		packageFlagGroup,
 		reportFlagGroup,
@@ -708,7 +702,6 @@ func NewSBOMCommand(globalFlags *flag.GlobalFlagGroup) *cobra.Command {
 	sbomFlags := &flag.Flags{
 		globalFlags,
 		cacheFlagGroup,
-		flag.NewDBFlagGroup(),
 		packageFlagGroup,
 		flag.NewRegistryFlagGroup(), // for DBs in private registries
 		reportFlagGroup,
@@ -893,11 +886,10 @@ func showVersion(cacheDir, outputFormat string, w io.Writer) error {
 }
 
 func validateArgs(cmd *cobra.Command, args []string) error {
-	// '--clear-cache' (removed), '--download-db-only', '--download-java-db-only', '--reset' (removed),
-	// '--reset-checks-bundle' (removed) and '--generate-default-config' don't conduct the subsequent scanning
-	if viper.GetBool(flag.ClearCacheFlag.ConfigName) || viper.GetBool(flag.DownloadDBOnlyFlag.ConfigName) ||
-		viper.GetBool(flag.ResetFlag.ConfigName) || viper.GetBool(flag.GenerateDefaultConfigFlag.ConfigName) ||
-		viper.GetBool(flag.DownloadJavaDBOnlyFlag.ConfigName) || viper.GetBool(flag.ResetChecksBundleFlag.ConfigName) {
+	// '--clear-cache', '--reset-checks-bundle' and '--generate-default-config' don't conduct the subsequent scanning
+	if viper.GetBool(flag.ClearCacheFlag.ConfigName) ||
+		viper.GetBool(flag.GenerateDefaultConfigFlag.ConfigName) ||
+		viper.GetBool(flag.ResetChecksBundleFlag.ConfigName) {
 		return nil
 	}
 

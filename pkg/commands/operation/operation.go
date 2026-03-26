@@ -4,10 +4,8 @@ import (
 	"context"
 	"sync"
 
-	"github.com/google/go-containerregistry/pkg/name"
 	"golang.org/x/xerrors"
 
-	"github.com/aquasecurity/trivy/pkg/db"
 	ftypes "github.com/aquasecurity/trivy/pkg/fanal/types"
 	"github.com/aquasecurity/trivy/pkg/flag"
 	"github.com/aquasecurity/trivy/pkg/log"
@@ -17,34 +15,6 @@ import (
 )
 
 var mu sync.Mutex
-
-// DownloadDB downloads the DB
-func DownloadDB(ctx context.Context, appVersion, cacheDir string, dbRepositories []name.Reference, quiet, skipUpdate bool,
-	opt ftypes.RegistryOptions) error {
-	mu.Lock()
-	defer mu.Unlock()
-
-	ctx = log.WithContextPrefix(ctx, log.PrefixVulnerabilityDB)
-	dbDir := db.Dir(cacheDir)
-	client := db.NewClient(dbDir, quiet, db.WithDBRepository(dbRepositories))
-	needsUpdate, err := client.NeedsUpdate(ctx, appVersion, skipUpdate)
-	if err != nil {
-		return xerrors.Errorf("database error: %w", err)
-	}
-
-	if needsUpdate {
-		log.InfoContext(ctx, "Need to update DB")
-		if err = client.Download(ctx, dbDir, opt); err != nil {
-			return xerrors.Errorf("failed to download vulnerability DB: %w", err)
-		}
-	}
-
-	// for debug
-	if err = client.ShowInfo(); err != nil {
-		return xerrors.Errorf("failed to show database info: %w", err)
-	}
-	return nil
-}
 
 // InitBuiltinChecks downloads the built-in policies and loads them
 func InitBuiltinChecks(ctx context.Context, client *policy.Client, skipUpdate bool, registryOpts ftypes.RegistryOptions) (string, error) {

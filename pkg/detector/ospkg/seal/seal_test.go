@@ -6,7 +6,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	dbTypes "github.com/aquasecurity/trivy-db/pkg/types"
-	"github.com/aquasecurity/trivy/internal/dbtest"
 	"github.com/aquasecurity/trivy/pkg/detector/ospkg/seal"
 	ftypes "github.com/aquasecurity/trivy/pkg/fanal/types"
 	"github.com/aquasecurity/trivy/pkg/types"
@@ -222,8 +221,6 @@ func TestScanner_Detect(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			_ = dbtest.InitDB(t, tt.fixtures)
-			defer dbtest.Close()
 
 			scanner := seal.NewScanner(tt.baseOS)
 			got, err := scanner.Detect(t.Context(), tt.args.osVer, nil, tt.args.pkgs)

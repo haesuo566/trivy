@@ -11,7 +11,6 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/hashicorp/go-multierror"
 	"github.com/samber/lo"
 	"github.com/spf13/viper"
 	"golang.org/x/xerrors"
@@ -19,7 +18,6 @@ import (
 
 	"github.com/aquasecurity/trivy/pkg/cache"
 	"github.com/aquasecurity/trivy/pkg/commands/operation"
-	"github.com/aquasecurity/trivy/pkg/db"
 	"github.com/aquasecurity/trivy/pkg/fanal/analyzer"
 	"github.com/aquasecurity/trivy/pkg/fanal/artifact"
 	ftypes "github.com/aquasecurity/trivy/pkg/fanal/types"
@@ -89,7 +87,6 @@ type Runner interface {
 type runner struct {
 	initializeScanService InitializeScanService
 	versionChecker        *notification.VersionChecker
-	dbOpen                bool
 }
 
 type RunnerOption func(*runner)
@@ -132,19 +129,12 @@ func NewRunner(ctx context.Context, cliOptions flag.Options, targetKind TargetKi
 
 // Close closes everything
 func (r *runner) Close(ctx context.Context) error {
-	var errs error
-	if r.dbOpen {
-		if err := db.Close(); err != nil {
-			errs = multierror.Append(errs, err)
-		}
-	}
-
 	// silently check if there is notifications
 	if r.versionChecker != nil {
 		r.versionChecker.PrintNotices(ctx, os.Stderr)
 	}
 
-	return errs
+	return nil
 }
 
 func (r *runner) ScanImage(ctx context.Context, opts flag.Options) (types.Report, error) {
@@ -455,7 +445,7 @@ func (r *runner) initScannerConfig(ctx context.Context, opts flag.Options) (Scan
 			FilePatterns:      opts.FilePatterns,
 			Parallel:          opts.Parallel,
 			Offline:           opts.OfflineScan,
-			NoProgress:        opts.NoProgress || opts.Quiet,
+			NoProgress:        opts.Quiet,
 			Insecure:          opts.Insecure,
 			RepoBranch:        opts.RepoBranch,
 			RepoCommit:        opts.RepoCommit,

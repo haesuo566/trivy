@@ -69,14 +69,6 @@
           "type": "boolean",
           "description": "remove scan cache (container and VM image analysis results)"
         },
-        "vuln-db": {
-          "type": "boolean",
-          "description": "remove vulnerability database"
-        },
-        "java-db": {
-          "type": "boolean",
-          "description": "remove Java database"
-        },
         "checks-bundle": {
           "type": "boolean",
           "description": "remove checks bundle"
@@ -112,45 +104,6 @@
         "listen": {
           "type": "string",
           "description": "listen address in server mode"
-        }
-      },
-      "type": "object"
-    },
-    "db": {
-      "properties": {
-        "download-only": {
-          "type": "boolean",
-          "description": "download/update vulnerability database but don't run a scan"
-        },
-        "skip-update": {
-          "type": "boolean",
-          "description": "skip updating vulnerability database"
-        },
-        "download-java-only": {
-          "type": "boolean",
-          "description": "download/update Java index database but don't run a scan"
-        },
-        "java-skip-update": {
-          "type": "boolean",
-          "description": "skip updating Java index database"
-        },
-        "no-progress": {
-          "type": "boolean",
-          "description": "suppress progress bar"
-        },
-        "repository": {
-          "items": {
-            "type": "string"
-          },
-          "type": "array",
-          "description": "OCI repository(ies) to retrieve trivy-db in order of priority"
-        },
-        "java-repository": {
-          "items": {
-            "type": "string"
-          },
-          "type": "array",
-          "description": "OCI repository(ies) to retrieve trivy-java-db in order of priority"
         }
       },
       "type": "object"

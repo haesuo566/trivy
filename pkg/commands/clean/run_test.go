@@ -28,8 +28,6 @@ func TestRun(t *testing.T) {
 			wantErr: false,
 			checkFunc: func(t *testing.T, dir string) {
 				assert.NoDirExists(t, filepath.Join(dir, "fanal"))
-				assert.NoDirExists(t, filepath.Join(dir, "db"))
-				assert.NoDirExists(t, filepath.Join(dir, "java-db"))
 				assert.NoDirExists(t, filepath.Join(dir, "policy"))
 				assert.DirExists(t, dir)
 			},
@@ -42,34 +40,6 @@ func TestRun(t *testing.T) {
 			wantErr: false,
 			checkFunc: func(t *testing.T, dir string) {
 				assert.NoDirExists(t, filepath.Join(dir, "fanal"))
-				assert.DirExists(t, filepath.Join(dir, "db"))
-				assert.DirExists(t, filepath.Join(dir, "java-db"))
-				assert.DirExists(t, filepath.Join(dir, "policy"))
-			},
-		},
-		{
-			name: "clean vulnerability DB",
-			cleanOpts: flag.CleanOptions{
-				CleanVulnerabilityDB: true,
-			},
-			wantErr: false,
-			checkFunc: func(t *testing.T, dir string) {
-				assert.NoDirExists(t, filepath.Join(dir, "db"))
-				assert.DirExists(t, filepath.Join(dir, "fanal"))
-				assert.DirExists(t, filepath.Join(dir, "java-db"))
-				assert.DirExists(t, filepath.Join(dir, "policy"))
-			},
-		},
-		{
-			name: "clean Java DB",
-			cleanOpts: flag.CleanOptions{
-				CleanJavaDB: true,
-			},
-			wantErr: false,
-			checkFunc: func(t *testing.T, dir string) {
-				assert.NoDirExists(t, filepath.Join(dir, "java-db"))
-				assert.DirExists(t, filepath.Join(dir, "fanal"))
-				assert.DirExists(t, filepath.Join(dir, "db"))
 				assert.DirExists(t, filepath.Join(dir, "policy"))
 			},
 		},
@@ -82,8 +52,6 @@ func TestRun(t *testing.T) {
 			checkFunc: func(t *testing.T, dir string) {
 				assert.NoDirExists(t, filepath.Join(dir, "policy"))
 				assert.DirExists(t, filepath.Join(dir, "fanal"))
-				assert.DirExists(t, filepath.Join(dir, "db"))
-				assert.DirExists(t, filepath.Join(dir, "java-db"))
 			},
 		},
 		{
@@ -127,8 +95,6 @@ func TestRun(t *testing.T) {
 func createTestFiles(t *testing.T, dir string) {
 	subdirs := []string{
 		"fanal",
-		"db",
-		"java-db",
 		"policy",
 	}
 	for _, subdir := range subdirs {
