@@ -150,7 +150,6 @@ func (a *Storage) Analyze(ctx context.Context, r *io.SectionReader) (types.BlobI
 		Applications:    result.Applications,
 		Secrets:         result.Secrets,
 		Licenses:        result.Licenses,
-		CustomResources: result.CustomResources,
 
 		// For Red Hat
 		BuildInfo: result.BuildInfo,

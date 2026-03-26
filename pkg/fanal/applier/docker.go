@@ -158,15 +158,6 @@ func ApplyLayers(layers []ftypes.BlobInfo) ftypes.ArtifactDetail {
 			nestedMap.SetByString(key, sep, license)
 		}
 
-		// Apply custom resources
-		for _, customResource := range layer.CustomResources {
-			key := fmt.Sprintf("%s/custom:%s", customResource.FilePath, customResource.Type)
-			customResource.Layer = ftypes.Layer{
-				Digest: layer.Digest,
-				DiffID: layer.DiffID,
-			}
-			nestedMap.SetByString(key, sep, customResource)
-		}
 	}
 
 	// nolint
@@ -180,8 +171,6 @@ func ApplyLayers(layers []ftypes.BlobInfo) ftypes.ArtifactDetail {
 			mergedLayer.Misconfigurations = append(mergedLayer.Misconfigurations, v)
 		case ftypes.LicenseFile:
 			mergedLayer.Licenses = append(mergedLayer.Licenses, v)
-		case ftypes.CustomResource:
-			mergedLayer.CustomResources = append(mergedLayer.CustomResources, v)
 		}
 		return nil
 	})

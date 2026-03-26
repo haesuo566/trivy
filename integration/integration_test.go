@@ -271,12 +271,6 @@ func readReport(t *testing.T, filePath string) types.Report {
 			report.Results[i].Vulnerabilities[j].Layer.Digest = ""
 		}
 
-		sort.Slice(result.CustomResources, func(i, j int) bool {
-			if result.CustomResources[i].Type != result.CustomResources[j].Type {
-				return result.CustomResources[i].Type < result.CustomResources[j].Type
-			}
-			return result.CustomResources[i].FilePath < result.CustomResources[j].FilePath
-		})
 	}
 
 	return report

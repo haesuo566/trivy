@@ -189,10 +189,6 @@ type BlobInfo struct {
 	// This information will be embedded into packages when applying layers.
 	// ref. https://redhat-connect.gitbook.io/partner-guide-for-adopting-red-hat-oval-v2/determining-common-platform-enumeration-cpe
 	BuildInfo *BuildInfo `json:",omitempty"`
-
-	// CustomResources hold analysis results from custom analyzers.
-	// It is for extensibility and not used in OSS.
-	CustomResources []CustomResource `json:",omitempty"`
 }
 
 func (b BlobInfo) Layer() Layer {
@@ -216,10 +212,6 @@ type ArtifactDetail struct {
 
 	// ImageConfig has information from container image config
 	ImageConfig ImageConfigDetail
-
-	// CustomResources hold analysis results from custom analyzers.
-	// It is for extensibility and not used in OSS.
-	CustomResources []CustomResource `json:",omitempty"`
 
 	Layers Layers `json:",omitzero"`
 }
@@ -278,11 +270,3 @@ type ImageConfigDetail struct {
 	Secret *Secret `json:",omitempty"`
 }
 
-// CustomResource holds the analysis result from a custom analyzer.
-// It is for extensibility and not used in OSS.
-type CustomResource struct {
-	Type     string
-	FilePath string
-	Layer    Layer
-	Data     any
-}

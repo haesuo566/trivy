@@ -78,8 +78,6 @@ const (
 	ClassSecret      ResultClass = "secret"       // For detected secrets
 	ClassLicense     ResultClass = "license"      // For detected package licenses
 	ClassLicenseFile ResultClass = "license-file" // For detected licenses in files
-	ClassCustom      ResultClass = "custom"
-
 	ComplianceK8sNsa10           = Compliance("k8s-nsa-1.0")
 	ComplianceK8sCIS123          = Compliance("k8s-cis-1.23")
 	ComplianceK8sPSSBaseline01   = Compliance("k8s-pss-baseline-0.1")
@@ -139,7 +137,6 @@ type Result struct {
 	Misconfigurations []DetectedMisconfiguration `json:"Misconfigurations,omitempty"`
 	Secrets           []DetectedSecret           `json:"Secrets,omitempty"`
 	Licenses          []DetectedLicense          `json:"Licenses,omitempty"`
-	CustomResources   []ftypes.CustomResource    `json:"CustomResources,omitempty"`
 
 	// ModifiedFindings holds a list of findings that have been modified from their original state.
 	// This can include vulnerabilities that have been marked as ignored, not affected, or have had
@@ -149,7 +146,7 @@ type Result struct {
 
 func (r *Result) IsEmpty() bool {
 	return len(r.Packages) == 0 && len(r.Vulnerabilities) == 0 && len(r.Misconfigurations) == 0 &&
-		len(r.Secrets) == 0 && len(r.Licenses) == 0 && len(r.CustomResources) == 0 && len(r.ModifiedFindings) == 0
+		len(r.Secrets) == 0 && len(r.Licenses) == 0 && len(r.ModifiedFindings) == 0
 }
 
 type MisconfSummary struct {

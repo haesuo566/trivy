@@ -9,7 +9,6 @@ import (
 
 	"github.com/aquasecurity/trivy-db/pkg/db"
 	"github.com/aquasecurity/trivy/internal/dbtest"
-	"github.com/aquasecurity/trivy/internal/hooktest"
 	"github.com/aquasecurity/trivy/pkg/cache"
 	"github.com/aquasecurity/trivy/pkg/fanal/applier"
 	ftypes "github.com/aquasecurity/trivy/pkg/fanal/types"
@@ -155,7 +154,6 @@ func TestScanner_Scan(t *testing.T) {
 		name       string
 		args       args
 		fixtures   []string
-		setUpHook  bool
 		setupCache func(t *testing.T) cache.Cache
 		want       types.ScanResponse
 		wantErr    string
@@ -877,62 +875,6 @@ func TestScanner_Scan(t *testing.T) {
 			},
 		},
 		{
-			name: "happy path with hooks",
-			args: args{
-				target:   "alpine:latest",
-				layerIDs: []string{"sha256:5216338b40a7b96416b8b9858974bbe4acc3096ee60acbc4dfb1ee02aecceb10"},
-				options: types.ScanOptions{
-					PkgTypes:            []string{types.PkgTypeOS},
-					PkgRelationships:    ftypes.Relationships,
-					Scanners:            types.Scanners{types.VulnerabilityScanner},
-				},
-			},
-			fixtures:  []string{"testdata/fixtures/happy.yaml"},
-			setUpHook: true,
-			setupCache: func(t *testing.T) cache.Cache {
-				c := cache.NewMemoryCache()
-				require.NoError(t, c.PutBlob(t.Context(), "sha256:5216338b40a7b96416b8b9858974bbe4acc3096ee60acbc4dfb1ee02aecceb10", ftypes.BlobInfo{
-					SchemaVersion: ftypes.BlobJSONSchemaVersion,
-					Size:          1000,
-					DiffID:        "sha256:5216338b40a7b96416b8b9858974bbe4acc3096ee60acbc4dfb1ee02aecceb10",
-					OS: ftypes.OS{
-						Family: ftypes.Alpine,
-						Name:   "3.11",
-					},
-					PackageInfos: []ftypes.PackageInfo{
-						{
-							FilePath: "lib/apk/db/installed",
-							Packages: []ftypes.Package{muslPkg},
-						},
-					},
-				}))
-				return c
-			},
-			want: types.ScanResponse{
-				Results: types.Results{
-					{
-						Target: "alpine:latest (pre-scan) (alpine 3.11)",
-						Class:  types.ClassOSPkg,
-						Type:   ftypes.Alpine,
-						Packages: ftypes.Packages{
-							muslPkg,
-						},
-					},
-				},
-				OS: ftypes.OS{
-					Family: "alpine",
-					Name:   "3.11",
-					Eosl:   true,
-				},
-				Layers: ftypes.Layers{
-					{
-						Size:   1000,
-						DiffID: "sha256:5216338b40a7b96416b8b9858974bbe4acc3096ee60acbc4dfb1ee02aecceb10",
-					},
-				},
-			},
-		},
-		{
 			name: "happy path with misconfigurations",
 			args: args{
 				target:   "/app/configs",
@@ -1249,10 +1191,6 @@ func TestScanner_Scan(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			_ = dbtest.InitDB(t, tt.fixtures)
 			defer db.Close()
-
-			if tt.setUpHook {
-				hooktest.Init(t)
-			}
 
 			c := tt.setupCache(t)
 			a := applier.NewApplier(c)

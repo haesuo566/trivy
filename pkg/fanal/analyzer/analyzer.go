@@ -191,9 +191,6 @@ type AnalysisResult struct {
 	// For Red Hat
 	BuildInfo *types.BuildInfo
 
-	// CustomResources hold analysis results from custom analyzers.
-	// It is for extensibility and not used in OSS.
-	CustomResources []types.CustomResource
 }
 
 func NewAnalysisResult() *AnalysisResult {
@@ -204,7 +201,7 @@ func NewAnalysisResult() *AnalysisResult {
 func (r *AnalysisResult) isEmpty() bool {
 	return lo.IsEmpty(r.OS) && r.Repository == nil && len(r.PackageInfos) == 0 && len(r.Applications) == 0 &&
 		len(r.Misconfigurations) == 0 && len(r.Secrets) == 0 && len(r.Licenses) == 0 && len(r.SystemInstalledFiles) == 0 &&
-		r.BuildInfo == nil && len(r.Digests) == 0 && len(r.CustomResources) == 0
+		r.BuildInfo == nil && len(r.Digests) == 0
 }
 
 func (r *AnalysisResult) Sort() {
@@ -228,11 +225,6 @@ func (r *AnalysisResult) Sort() {
 	for _, app := range r.Applications {
 		sort.Sort(app.Packages)
 	}
-
-	// Custom resources
-	sort.Slice(r.CustomResources, func(i, j int) bool {
-		return r.CustomResources[i].FilePath < r.CustomResources[j].FilePath
-	})
 
 	// Misconfigurations
 	sort.Slice(r.Misconfigurations, func(i, j int) bool {
@@ -318,7 +310,6 @@ func (r *AnalysisResult) Merge(newResult *AnalysisResult) {
 		}
 	}
 
-	r.CustomResources = append(r.CustomResources, newResult.CustomResources...)
 }
 
 // setAnalyzedBy sets the AnalyzedBy field for all packages in the result.

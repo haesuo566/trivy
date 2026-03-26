@@ -67,17 +67,6 @@ func (h systemFileFilteringPostHandler) Handle(_ context.Context, result *analyz
 		apps = append(apps, app)
 	}
 
-	// Iterate and delete unnecessary customResource
-	i := 0
-	for _, res := range blob.CustomResources {
-		if slices.Contains(systemFiles, res.FilePath) {
-			continue
-		}
-		blob.CustomResources[i] = res
-		i++
-	}
-	blob.CustomResources = blob.CustomResources[:i]
-
 	// Overwrite Applications
 	blob.Applications = apps
 

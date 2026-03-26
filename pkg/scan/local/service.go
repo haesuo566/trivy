@@ -14,7 +14,6 @@ import (
 
 	dbTypes "github.com/aquasecurity/trivy-db/pkg/types"
 	ospkgDetector "github.com/aquasecurity/trivy/pkg/detector/ospkg"
-	"github.com/aquasecurity/trivy/pkg/extension"
 	"github.com/aquasecurity/trivy/pkg/fanal/analyzer"
 	"github.com/aquasecurity/trivy/pkg/fanal/applier"
 	ftypes "github.com/aquasecurity/trivy/pkg/fanal/types"
@@ -96,7 +95,6 @@ func (s Service) Scan(ctx context.Context, targetName, artifactKey string, blobK
 		Misconfigurations: mergeMisconfigurations(targetName, detail),
 		Secrets:           mergeSecrets(targetName, detail),
 		Licenses:          detail.Licenses,
-		CustomResources:   detail.CustomResources,
 	}
 
 	results, os, err := s.ScanTarget(ctx, target, options)
@@ -111,11 +109,6 @@ func (s Service) Scan(ctx context.Context, targetName, artifactKey string, blobK
 }
 
 func (s Service) ScanTarget(ctx context.Context, target types.ScanTarget, options types.ScanOptions) (types.Results, ftypes.OS, error) {
-	// Call pre-scan hooks
-	if err := extension.PreScan(ctx, &target, options); err != nil {
-		return nil, ftypes.OS{}, xerrors.Errorf("pre scan error: %w", err)
-	}
-
 	var results types.Results
 
 	// Filter packages according to the options
@@ -137,20 +130,6 @@ func (s Service) ScanTarget(ctx context.Context, target types.ScanTarget, option
 
 	// Scan licenses
 	results = append(results, s.scanLicenses(target, options)...)
-
-	// For WASM plugins and custom analyzers
-	if len(target.CustomResources) != 0 {
-		results = append(results, types.Result{
-			Class:           types.ClassCustom,
-			CustomResources: target.CustomResources,
-		})
-	}
-
-
-	// Call post-scan hooks
-	if results, err = extension.PostScan(ctx, results); err != nil {
-		return nil, ftypes.OS{}, xerrors.Errorf("post scan error: %w", err)
-	}
 
 	return results, target.OS, nil
 }
