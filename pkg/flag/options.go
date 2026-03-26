@@ -446,31 +446,6 @@ func (o *Options) Align(f *Flags) error {
 		return xerrors.Errorf("'--pkg-relationships' cannot be used with SBOM formats")
 	}
 
-	if o.Compliance.Spec.ID != "" {
-		if viper.IsSet(ScannersFlag.ConfigName) {
-			log.Info(`The option to change scanners is disabled for scanning with the "--compliance" flag. Default scanners used.`)
-		}
-		if viper.IsSet(ImageConfigScannersFlag.ConfigName) {
-			log.Info(`The option to change image config scanners is disabled for scanning with the "--compliance" flag. Default image config scanners used.`)
-		}
-
-		// set scanners types by spec
-		scanners, err := o.Compliance.Scanners()
-		if err != nil {
-			return xerrors.Errorf("scanner error: %w", err)
-		}
-
-		o.Scanners = scanners
-		o.ImageConfigScanners = nil
-		// TODO: define image-config-scanners in the spec
-		if o.Compliance.Spec.ID == types.ComplianceDockerCIS160 {
-			o.Scanners = types.Scanners{types.VulnerabilityScanner}
-			o.ImageConfigScanners = types.Scanners{
-				types.MisconfigScanner,
-			}
-		}
-	}
-
 	return nil
 }
 

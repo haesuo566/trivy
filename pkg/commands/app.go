@@ -7,7 +7,6 @@ import (
 	"io"
 	"os"
 	"path/filepath"
-	"strings"
 	"time"
 
 	"github.com/spf13/cobra"
@@ -187,14 +186,6 @@ func NewRootCommand(globalFlags *flag.GlobalFlagGroup) *cobra.Command {
 
 func NewImageCommand(globalFlags *flag.GlobalFlagGroup) *cobra.Command {
 	reportFlagGroup := flag.NewReportFlagGroup()
-	report := flag.ReportFormatFlag.Clone()
-	report.Default = "summary"                                   // override the default value as the summary is preferred for the compliance report
-	report.Usage = "specify a format for the compliance report." // "--report" works only with "--compliance"
-	reportFlagGroup.ReportFormat = report
-
-	compliance := flag.ComplianceFlag.Clone()
-	compliance.Usage = fmt.Sprintf("%s (built-in compliance's: %s)", compliance.Usage, types.ComplianceDockerCIS160)
-	reportFlagGroup.Compliance = compliance // override usage as the accepted values differ for each subcommand.
 
 	packageFlagGroup := flag.NewPackageFlagGroup()
 	packageFlagGroup.IncludeDevDeps = nil // disable '--include-dev-deps'
@@ -280,8 +271,7 @@ func NewFilesystemCommand(globalFlags *flag.GlobalFlagGroup) *cobra.Command {
 	cacheFlagGroup.CacheBackend.Default = string(cache.TypeMemory) // Use memory cache by default
 
 	reportFlagGroup := flag.NewReportFlagGroup()
-	reportFlagGroup.ReportFormat.Usage = "specify a compliance report format for the output" // @TODO: support --report summary for non compliance reports
-	reportFlagGroup.ExitOnEOL = nil                                                          // disable '--exit-on-eol'
+	reportFlagGroup.ExitOnEOL = nil // disable '--exit-on-eol'
 
 	fsFlags := flag.Flags{
 		globalFlags,
@@ -337,7 +327,6 @@ func NewFilesystemCommand(globalFlags *flag.GlobalFlagGroup) *cobra.Command {
 func NewRootfsCommand(globalFlags *flag.GlobalFlagGroup) *cobra.Command {
 	reportFlagGroup := flag.NewReportFlagGroup()
 	reportFlagGroup.ReportFormat = nil // TODO: support --report summary
-	reportFlagGroup.Compliance = nil   // disable '--compliance'
 	reportFlagGroup.ReportFormat = nil // disable '--report'
 
 	packageFlagGroup := flag.NewPackageFlagGroup()
@@ -401,7 +390,6 @@ func NewRootfsCommand(globalFlags *flag.GlobalFlagGroup) *cobra.Command {
 func NewRepositoryCommand(globalFlags *flag.GlobalFlagGroup) *cobra.Command {
 	reportFlagGroup := flag.NewReportFlagGroup()
 	reportFlagGroup.ReportFormat = nil // TODO: support --report summary
-	reportFlagGroup.Compliance = nil   // disable '--compliance'
 	reportFlagGroup.ExitOnEOL = nil    // disable '--exit-on-eol'
 
 	scanFlagGroup := flag.NewScanFlagGroup()
@@ -469,8 +457,7 @@ func NewConfigCommand(globalFlags *flag.GlobalFlagGroup) *cobra.Command {
 	}
 
 	reportFlagGroup := flag.NewReportFlagGroup()
-	reportFlagGroup.ExitOnEOL = nil                                                          // disable '--exit-on-eol'
-	reportFlagGroup.ReportFormat.Usage = "specify a compliance report format for the output" // @TODO: support --report summary for non compliance reports
+	reportFlagGroup.ExitOnEOL = nil // disable '--exit-on-eol'
 
 	cacheFlagGroup := flag.NewCacheFlagGroup()
 	cacheFlagGroup.CacheBackend.Default = string(cache.TypeMemory)
@@ -544,13 +531,6 @@ func NewKubernetesCommand(globalFlags *flag.GlobalFlagGroup) *cobra.Command {
 
 	reportFlagGroup := flag.NewReportFlagGroup()
 	reportFlagGroup.ExitOnEOL = nil // disable '--exit-on-eol'
-	compliance := flag.ComplianceFlag.Clone()
-	var compliances strings.Builder
-	for _, val := range types.BuiltInK8sCompliances {
-		fmt.Fprintf(&compliances, "\n  - %s", val)
-	}
-	compliance.Usage = fmt.Sprintf("%s\nBuilt-in compliance's:%s", compliance.Usage, compliances.String())
-	reportFlagGroup.Compliance = compliance // override usage as the accepted values differ for each subcommand.
 
 	formatFlag := flag.FormatFlag.Clone()
 	formatFlag.Values = xstrings.ToStringSlice([]types.Format{

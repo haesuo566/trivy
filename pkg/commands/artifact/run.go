@@ -245,9 +245,8 @@ func Run(ctx context.Context, opts flag.Options, targetKind TargetKind) (err err
 		v := viper.New()
 		for _, k := range viper.AllKeys() {
 			// Skip the `GenerateDefaultConfigFlag` flags to avoid errors with default config file.
-			// Users often use "normal" formats instead of compliance. So we'll skip ComplianceFlag
 			// Also don't keep removed or deprecated flags to avoid confusing users.
-			if k == flag.GenerateDefaultConfigFlag.ConfigName || k == flag.ComplianceFlag.ConfigName || slices.Contains(hiddenFlags, k) {
+			if k == flag.GenerateDefaultConfigFlag.ConfigName || slices.Contains(hiddenFlags, k) {
 				continue
 			}
 			v.Set(k, viper.Get(k))

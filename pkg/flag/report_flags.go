@@ -1,15 +1,10 @@
 package flag
 
 import (
-	"slices"
-	"strings"
-
 	"github.com/spf13/viper"
 	"golang.org/x/xerrors"
 
 	dbTypes "github.com/aquasecurity/trivy-db/pkg/types"
-	"github.com/aquasecurity/trivy/pkg/cache"
-	"github.com/aquasecurity/trivy/pkg/compliance/spec"
 	"github.com/aquasecurity/trivy/pkg/log"
 	"github.com/aquasecurity/trivy/pkg/result"
 	"github.com/aquasecurity/trivy/pkg/types"
@@ -70,6 +65,7 @@ var (
 		Name:       "output",
 		ConfigName: "output",
 		Shorthand:  "o",
+		Default:    "sbom.json",
 		Usage:      "output file name",
 	}
 	SeverityFlag = Flag[[]string]{
@@ -80,11 +76,6 @@ var (
 		Values:        dbTypes.SeverityNames,
 		Usage:         "severities of security issues to be displayed",
 		TelemetrySafe: true,
-	}
-	ComplianceFlag = Flag[string]{
-		Name:       "compliance",
-		ConfigName: "scan.compliance",
-		Usage:      "compliance report to generate",
 	}
 )
 
@@ -98,8 +89,7 @@ type ReportFlagGroup struct {
 	ExitCode     *Flag[int]
 	ExitOnEOL    *Flag[int]
 	Output       *Flag[string]
-	Severity     *Flag[[]string]
-	Compliance   *Flag[string]
+	Severity *Flag[[]string]
 }
 
 type ReportOptions struct {
@@ -110,8 +100,7 @@ type ReportOptions struct {
 	ExitOnEOL    int
 	IgnorePolicy string
 	Output       string
-	Severities   []dbTypes.Severity
-	Compliance   spec.ComplianceSpec
+	Severities []dbTypes.Severity
 }
 
 func NewReportFlagGroup() *ReportFlagGroup {
@@ -123,8 +112,7 @@ func NewReportFlagGroup() *ReportFlagGroup {
 		ExitCode:     ExitCodeFlag.Clone(),
 		ExitOnEOL:    ExitOnEOLFlag.Clone(),
 		Output:       OutputFlag.Clone(),
-		Severity:     SeverityFlag.Clone(),
-		Compliance:   ComplianceFlag.Clone(),
+		Severity: SeverityFlag.Clone(),
 	}
 }
 
@@ -142,17 +130,11 @@ func (f *ReportFlagGroup) Flags() []Flagger {
 		f.ExitOnEOL,
 		f.Output,
 		f.Severity,
-		f.Compliance,
 	}
 }
 
 func (f *ReportFlagGroup) ToOptions(opts *Options) error {
 	format := types.Format(f.Format.Value())
-
-	cs, err := loadComplianceTypes(f.Compliance.Value())
-	if err != nil {
-		return xerrors.Errorf("unable to load compliance spec: %w", err)
-	}
 
 	if viper.IsSet(f.IgnoreFile.ConfigName) && !fsutils.FileExists(f.IgnoreFile.Value()) {
 		return xerrors.Errorf("ignore file not found: %s", f.IgnoreFile.Value())
@@ -167,22 +149,8 @@ func (f *ReportFlagGroup) ToOptions(opts *Options) error {
 		IgnorePolicy: f.IgnorePolicy.Value(),
 		Output:       f.Output.Value(),
 		Severities:   toSeverity(f.Severity.Value()),
-		Compliance:   cs,
 	}
 	return nil
-}
-
-func loadComplianceTypes(compliance string) (spec.ComplianceSpec, error) {
-	if compliance != "" && !slices.Contains(types.SupportedCompliances, compliance) && !strings.HasPrefix(compliance, "@") {
-		return spec.ComplianceSpec{}, xerrors.Errorf("unknown compliance : %v", compliance)
-	}
-
-	cs, err := spec.GetComplianceSpec(compliance, cache.DefaultDir())
-	if err != nil {
-		return spec.ComplianceSpec{}, xerrors.Errorf("spec loading from file system error: %w", err)
-	}
-
-	return cs, nil
 }
 
 func toSeverity(severity []string) []dbTypes.Severity {

@@ -707,10 +707,6 @@
     },
     "scan": {
       "properties": {
-        "compliance": {
-          "type": "string",
-          "description": "compliance report to generate"
-        },
         "show-suppressed": {
           "type": "boolean",
           "description": "[EXPERIMENTAL] show suppressed vulnerabilities"

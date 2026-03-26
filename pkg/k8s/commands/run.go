@@ -11,7 +11,6 @@ import (
 	"github.com/aquasecurity/trivy-kubernetes/pkg/k8s"
 	cmd "github.com/aquasecurity/trivy/pkg/commands/artifact"
 	"github.com/aquasecurity/trivy/pkg/commands/operation"
-	cr "github.com/aquasecurity/trivy/pkg/compliance/report"
 	"github.com/aquasecurity/trivy/pkg/flag"
 	k8sRep "github.com/aquasecurity/trivy/pkg/k8s"
 	"github.com/aquasecurity/trivy/pkg/k8s/report"
@@ -68,14 +67,6 @@ func (r *runner) run(ctx context.Context, artifacts []*k8sArtifacts.Artifact) er
 
 	s := scanner.NewScanner(r.cluster, runner, r.flagOpts)
 
-	// set scanners types by spec
-	if r.flagOpts.Compliance.Spec.ID != "" {
-		scanners, err := r.flagOpts.Compliance.Scanners()
-		if err != nil {
-			return xerrors.Errorf("scanner error: %w", err)
-		}
-		r.flagOpts.ScanOptions.Scanners = scanners
-	}
 	var rpt report.Report
 	log.Info("Scanning K8s...", log.String("K8s", r.cluster))
 	rpt, err = s.Scan(ctx, artifacts)
@@ -88,22 +79,6 @@ func (r *runner) run(ctx context.Context, artifacts []*k8sArtifacts.Artifact) er
 		return xerrors.Errorf("failed to create output file: %w", err)
 	}
 	defer cleanup()
-
-	if r.flagOpts.Compliance.Spec.ID != "" {
-		var scanResults []types.Results
-		for _, rss := range rpt.Resources {
-			scanResults = append(scanResults, rss.Results)
-		}
-		complianceReport, err := cr.BuildComplianceReport(scanResults, r.flagOpts.Compliance)
-		if err != nil {
-			return xerrors.Errorf("compliance report build error: %w", err)
-		}
-		return cr.Write(ctx, complianceReport, cr.Option{
-			Format: r.flagOpts.Format,
-			Report: r.flagOpts.ReportFormat,
-			Output: output,
-		})
-	}
 
 	if err := k8sRep.Write(ctx, rpt, report.Option{
 		Format:     r.flagOpts.Format,

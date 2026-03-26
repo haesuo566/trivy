@@ -3,12 +3,8 @@ package rules
 import (
 	"sync"
 
-	"gopkg.in/yaml.v3"
-
-	"github.com/aquasecurity/trivy-checks/pkg/compliance"
 	"github.com/aquasecurity/trivy/pkg/iac/framework"
 	"github.com/aquasecurity/trivy/pkg/iac/scan"
-	dftypes "github.com/aquasecurity/trivy/pkg/iac/types"
 	ruleTypes "github.com/aquasecurity/trivy/pkg/iac/types/rules"
 	"github.com/aquasecurity/trivy/pkg/set"
 )
@@ -88,34 +84,6 @@ func (r *registry) getFrameworkRules(fw ...framework.Framework) []ruleTypes.Regi
 	return registered
 }
 
-func (r *registry) getSpecRules(spec string) []ruleTypes.RegisteredRule {
-	r.RLock()
-	defer r.RUnlock()
-	var specRules []ruleTypes.RegisteredRule
-
-	var complianceSpec dftypes.ComplianceSpec
-	specContent := compliance.GetSpec(spec)
-	if err := yaml.Unmarshal([]byte(specContent), &complianceSpec); err != nil {
-		return nil
-	}
-
-	checkIDs := set.New[string]()
-	for _, csRule := range complianceSpec.Spec.Controls {
-		for _, c := range csRule.Checks {
-			checkIDs.Append(c.ID)
-		}
-	}
-
-	registered := r.getFrameworkRules(framework.ALL)
-	for _, rule := range registered {
-		if checkIDs.Contains(rule.AVDID) || checkIDs.Contains(rule.ID) {
-			specRules = append(specRules, rule)
-		}
-	}
-
-	return specRules
-}
-
 func (r *registry) Reset() {
 	r.Lock()
 	defer r.Unlock()
@@ -124,14 +92,6 @@ func (r *registry) Reset() {
 
 func GetFrameworkRules(fw ...framework.Framework) []ruleTypes.RegisteredRule {
 	return coreRegistry.getFrameworkRules(fw...)
-}
-
-func GetSpecRules(spec string) []ruleTypes.RegisteredRule {
-	if spec != "" {
-		return coreRegistry.getSpecRules(spec)
-	}
-
-	return GetFrameworkRules()
 }
 
 func GetRegistered(fw ...framework.Framework) []ruleTypes.RegisteredRule {

@@ -8,9 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	dbTypes "github.com/aquasecurity/trivy-db/pkg/types"
-	"github.com/aquasecurity/trivy/pkg/compliance/spec"
 	"github.com/aquasecurity/trivy/pkg/flag"
-	iacTypes "github.com/aquasecurity/trivy/pkg/iac/types"
 	"github.com/aquasecurity/trivy/pkg/log"
 	"github.com/aquasecurity/trivy/pkg/types"
 )
@@ -24,7 +22,6 @@ func TestReportFlagGroup_ToOptions(t *testing.T) {
 		ignorePolicy string
 		output     string
 		severities string
-		compliance string
 		debug      bool
 	}
 	tests := []struct {
@@ -50,35 +47,6 @@ func TestReportFlagGroup_ToOptions(t *testing.T) {
 				Format:     types.FormatCycloneDX,
 			},
 		},
-		{
-			name: "happy path with compliance",
-			fields: fields{
-				compliance: "@testdata/example-spec.yaml",
-				severities: dbTypes.SeverityLow.String(),
-			},
-			want: flag.ReportOptions{
-				Compliance: spec.ComplianceSpec{
-					Spec: iacTypes.Spec{
-						ID:          "0001",
-						Title:       "my-custom-spec",
-						Description: "My fancy spec",
-						Version:     "1.2",
-						Controls: []iacTypes.Control{
-							{
-								ID:          "1.1",
-								Name:        "Unencrypted S3 bucket",
-								Description: "S3 Buckets should be encrypted to protect the data that is stored within them if access is compromised.",
-								Checks: []iacTypes.SpecCheck{
-									{ID: "AVD-AWS-0088"},
-								},
-								Severity: "HIGH",
-							},
-						},
-					},
-				},
-				Severities: []dbTypes.Severity{dbTypes.SeverityLow},
-			},
-		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -97,8 +65,6 @@ func TestReportFlagGroup_ToOptions(t *testing.T) {
 			setValue(flag.ExitOnEOLFlag.ConfigName, tt.fields.exitOnEOSL)
 			setValue(flag.OutputFlag.ConfigName, tt.fields.output)
 			setValue(flag.SeverityFlag.ConfigName, tt.fields.severities)
-			setValue(flag.ComplianceFlag.ConfigName, tt.fields.compliance)
-
 			// Assert options
 			f := &flag.ReportFlagGroup{
 				Format:       flag.FormatFlag.Clone(),
@@ -108,7 +74,6 @@ func TestReportFlagGroup_ToOptions(t *testing.T) {
 				ExitOnEOL:    flag.ExitOnEOLFlag.Clone(),
 				Output:       flag.OutputFlag.Clone(),
 				Severity:     flag.SeverityFlag.Clone(),
-				Compliance:   flag.ComplianceFlag.Clone(),
 			}
 
 			flags := flag.Flags{f}

@@ -78,24 +78,9 @@ func nodeCollectorOptions(ctx context.Context, opts flag.Options) []trivyk8s.Nod
 			}...)
 	}
 
-	complianceCommandsIDs := getComplianceCommands(opts)
 	nodeCollectorOptions = append(nodeCollectorOptions, []trivyk8s.NodeCollectorOption{
 		trivyk8s.WithCommandPaths([]string{contentPath}),
-		trivyk8s.WithSpecCommandIds(complianceCommandsIDs),
 	}...)
 	return nodeCollectorOptions
 }
 
-func getComplianceCommands(opts flag.Options) []string {
-	var commands []string
-	if opts.Compliance.Spec.ID != "" {
-		for _, control := range opts.Compliance.Spec.Controls {
-			for _, command := range control.Commands {
-				if command.ID != "" {
-					commands = append(commands, command.ID)
-				}
-			}
-		}
-	}
-	return commands
-}
