@@ -138,10 +138,6 @@ const (
 	goldenLicenseCycloneDX                 = "testdata/license-cyclonedx.json.golden"
 	goldenMinikubeKBOM                     = "testdata/minikube-kbom.json.golden"
 
-	// Convert tests (convert_test.go)
-	goldenNPMCycloneDX             = "testdata/npm-cyclonedx.json.golden"
-	goldenConvertNPMWithSuppressed = "testdata/fixtures/convert/npm-with-suppressed.json.golden"
-
 	// VM tests (vm_test.go)
 	goldenAmazonLinux2GP2X86VM = "testdata/amazonlinux2-gp2-x86-vm.json.golden"
 	goldenUbuntuGP2X86VM       = "testdata/ubuntu-gp2-x86-vm.json.golden"

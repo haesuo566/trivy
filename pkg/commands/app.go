@@ -18,7 +18,6 @@ import (
 	"github.com/aquasecurity/trivy/pkg/commands/artifact"
 	"github.com/aquasecurity/trivy/pkg/commands/auth"
 	"github.com/aquasecurity/trivy/pkg/commands/clean"
-	"github.com/aquasecurity/trivy/pkg/commands/convert"
 	"github.com/aquasecurity/trivy/pkg/fanal/analyzer"
 	"github.com/aquasecurity/trivy/pkg/flag"
 	k8scommands "github.com/aquasecurity/trivy/pkg/k8s/commands"
@@ -86,7 +85,6 @@ func NewApp() *cobra.Command {
 		NewRootfsCommand(globalFlags),
 		NewRepositoryCommand(globalFlags),
 		NewConfigCommand(globalFlags),
-		NewConvertCommand(globalFlags),
 		NewKubernetesCommand(globalFlags),
 		NewSBOMCommand(globalFlags),
 		NewVersionCommand(globalFlags),
@@ -455,58 +453,6 @@ func NewRepositoryCommand(globalFlags *flag.GlobalFlagGroup) *cobra.Command {
 	cmd.SetFlagErrorFunc(flagErrorFunc)
 	repoFlags.AddFlags(cmd)
 	cmd.SetUsageTemplate(fmt.Sprintf(usageTemplate, repoFlags.Usages(cmd)))
-
-	return cmd
-}
-
-func NewConvertCommand(globalFlags *flag.GlobalFlagGroup) *cobra.Command {
-	// To display the summary table, we need to enable scanners (to build columns).
-	// We can't get scanner information from the report (we don't include empty licenses and secrets in the report).
-	// So we need to ask the user to configure scanners (if needed).
-	scanFlagGroup := &flag.ScanFlagGroup{
-		Scanners: flag.ScannersFlag.Clone(),
-	}
-	scanFlagGroup.Scanners.Default = nil // disable default scanners
-	scanFlagGroup.Scanners.Usage = "List of scanners included when generating the json report. Used only for rendering the summary table."
-
-	convertFlags := flag.Flags{
-		globalFlags,
-		scanFlagGroup,
-		flag.NewReportFlagGroup(),
-	}
-
-	cmd := &cobra.Command{
-		Use:     "convert [flags] RESULT_JSON",
-		Aliases: []string{"conv"},
-		GroupID: groupUtility,
-		Short:   "Convert Trivy JSON report into a different format",
-		Example: `  # report conversion
-  $ trivy image --format json --output result.json debian:11
-  $ trivy convert --format cyclonedx --output result.cdx result.json
-`,
-		PreRunE: func(cmd *cobra.Command, args []string) error {
-			if err := convertFlags.Bind(cmd); err != nil {
-				return xerrors.Errorf("flag bind error: %w", err)
-			}
-			return validateArgs(cmd, args)
-		},
-		RunE: func(cmd *cobra.Command, args []string) error {
-			if err := convertFlags.Bind(cmd); err != nil {
-				return xerrors.Errorf("flag bind error: %w", err)
-			}
-			opts, err := convertFlags.ToOptions(args)
-			if err != nil {
-				return xerrors.Errorf("flag error: %w", err)
-			}
-
-			return convert.Run(cmd.Context(), opts)
-		},
-		SilenceErrors: true,
-		SilenceUsage:  true,
-	}
-	cmd.SetFlagErrorFunc(flagErrorFunc)
-	convertFlags.AddFlags(cmd)
-	cmd.SetUsageTemplate(fmt.Sprintf(usageTemplate, convertFlags.Usages(cmd)))
 
 	return cmd
 }
