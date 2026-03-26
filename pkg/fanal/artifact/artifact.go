@@ -46,7 +46,6 @@ type Option struct {
 	ImageOption types.ImageOptions
 
 	MisconfScannerOption misconf.ScannerOption
-	SecretScannerOption  analyzer.SecretScannerOption
 	LicenseScannerOption analyzer.LicenseScannerOption
 
 	WalkerOption walker.Option
@@ -60,7 +59,6 @@ func (o *Option) AnalyzerOptions() analyzer.AnalyzerOptions {
 		DisabledAnalyzers:    o.DisabledAnalyzers,
 		DetectionPriority:    o.DetectionPriority,
 		MisconfScannerOption: o.MisconfScannerOption,
-		SecretScannerOption:  o.SecretScannerOption,
 		LicenseScannerOption: o.LicenseScannerOption,
 	}
 }
@@ -70,7 +68,6 @@ func (o *Option) ConfigAnalyzerOptions() analyzer.ConfigAnalyzerOptions {
 		FilePatterns:         o.FilePatterns,
 		DisabledAnalyzers:    o.DisabledAnalyzers,
 		MisconfScannerOption: o.MisconfScannerOption,
-		SecretScannerOption:  o.SecretScannerOption,
 	}
 }
 

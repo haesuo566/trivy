@@ -148,7 +148,6 @@ func (a *Storage) Analyze(ctx context.Context, r *io.SectionReader) (types.BlobI
 		Repository:      result.Repository,
 		PackageInfos:    result.PackageInfos,
 		Applications:    result.Applications,
-		Secrets:         result.Secrets,
 		Licenses:        result.Licenses,
 
 		// For Red Hat

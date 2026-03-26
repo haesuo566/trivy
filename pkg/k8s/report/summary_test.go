@@ -13,7 +13,6 @@ func TestReport_ColumnHeading(t *testing.T) {
 	allScanners := types.Scanners{
 		types.VulnerabilityScanner,
 		types.MisconfigScanner,
-		types.SecretScanner,
 		types.RBACScanner,
 	}
 
@@ -32,7 +31,6 @@ func TestReport_ColumnHeading(t *testing.T) {
 				ResourceColumn,
 				VulnerabilitiesColumn,
 				MisconfigurationsColumn,
-				SecretsColumn,
 			},
 		},
 		{
@@ -54,7 +52,6 @@ func TestReport_ColumnHeading(t *testing.T) {
 				ResourceColumn,
 				VulnerabilitiesColumn,
 				MisconfigurationsColumn,
-				SecretsColumn,
 			},
 		},
 		{
@@ -65,16 +62,6 @@ func TestReport_ColumnHeading(t *testing.T) {
 				NamespaceColumn,
 				ResourceColumn,
 				MisconfigurationsColumn,
-			},
-		},
-		{
-			name:             "secret column only",
-			scanners:         types.Scanners{types.SecretScanner},
-			availableColumns: WorkloadColumns(),
-			want: []string{
-				NamespaceColumn,
-				ResourceColumn,
-				SecretsColumn,
 			},
 		},
 		{

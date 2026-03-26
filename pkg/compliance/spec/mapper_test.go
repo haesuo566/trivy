@@ -6,7 +6,6 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/aquasecurity/trivy/pkg/compliance/spec"
-	"github.com/aquasecurity/trivy/pkg/fanal/secret"
 	ftypes "github.com/aquasecurity/trivy/pkg/fanal/types"
 	"github.com/aquasecurity/trivy/pkg/types"
 )
@@ -21,9 +20,6 @@ func TestMapSpecCheckIDToFilteredResults(t *testing.T) {
 		types.VulnerabilityScanner: {
 			"CVE-9999-9999",
 			"VULN-CRITICAL",
-		},
-		types.SecretScanner: {
-			"SECRET-CRITICAL",
 		},
 	}
 	tests := []struct {
@@ -85,68 +81,6 @@ func TestMapSpecCheckIDToFilteredResults(t *testing.T) {
 							{
 								ID:     "1.2.31",
 								Status: types.MisconfStatusFailure,
-							},
-						},
-					},
-				},
-			},
-		},
-		{
-			name:     "secret",
-			checkIDs: checkIDs,
-			result: types.Result{
-				Target: "target",
-				Class:  types.ClassSecret,
-				Secrets: []types.DetectedSecret{
-					{
-						RuleID:   "aws-access-key-id",
-						Category: secret.CategoryAWS,
-						Severity: "CRITICAL",
-						Title:    "AWS Access Key ID",
-						Code: ftypes.Code{
-							Lines: []ftypes.Line{
-								{
-									Number:  2,
-									Content: "AWS_ACCESS_KEY_ID=*****",
-								},
-							},
-						},
-					},
-					{
-						RuleID:   "aws-account-id",
-						Category: secret.CategoryAWS,
-						Severity: "HIGH",
-						Title:    "AWS Account ID",
-						Code: ftypes.Code{
-							Lines: []ftypes.Line{
-								{
-									Number:  1,
-									Content: "AWS_ACCOUNT_ID=*****",
-								},
-							},
-						},
-					},
-				},
-			},
-			want: map[string]types.Results{
-				"SECRET-CRITICAL": {
-					{
-						Target: "target",
-						Class:  types.ClassSecret,
-						Secrets: []types.DetectedSecret{
-							{
-								RuleID:   "aws-access-key-id",
-								Category: secret.CategoryAWS,
-								Severity: "CRITICAL",
-								Title:    "AWS Access Key ID",
-								Code: ftypes.Code{
-									Lines: []ftypes.Line{
-										{
-											Number:  2,
-											Content: "AWS_ACCESS_KEY_ID=*****",
-										},
-									},
-								},
 							},
 						},
 					},

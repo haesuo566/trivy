@@ -157,9 +157,6 @@ type ArtifactInfo struct {
 	// Misconfiguration holds misconfiguration in container image config
 	Misconfiguration *Misconfiguration `json:",omitempty"`
 
-	// Secret holds secrets in container image config such as environment variables
-	Secret *Secret `json:",omitempty"`
-
 	// HistoryPackages are packages extracted from RUN instructions
 	HistoryPackages Packages `json:",omitempty"`
 }
@@ -182,7 +179,6 @@ type BlobInfo struct {
 	PackageInfos      []PackageInfo      `json:",omitempty"`
 	Applications      []Application      `json:",omitempty"`
 	Misconfigurations []Misconfiguration `json:",omitempty"`
-	Secrets           []Secret           `json:",omitempty"`
 	Licenses          []LicenseFile      `json:",omitempty"`
 
 	// Red Hat distributions have build info per layer.
@@ -207,7 +203,6 @@ type ArtifactDetail struct {
 	Packages          Packages           `json:",omitempty"`
 	Applications      Applications       `json:",omitempty"`
 	Misconfigurations []Misconfiguration `json:",omitempty"`
-	Secrets           Secrets            `json:",omitempty"`
 	Licenses          LicenseFiles       `json:",omitempty"`
 
 	// ImageConfig has information from container image config
@@ -220,23 +215,8 @@ type ArtifactDetail struct {
 func (a *ArtifactDetail) Sort() {
 	sort.Sort(a.Packages)
 	sort.Sort(a.Applications)
-	sort.Sort(a.Secrets)
 	sort.Sort(a.Licenses)
 	// Misconfigurations will be sorted later
-}
-
-type Secrets []Secret
-
-func (s Secrets) Len() int {
-	return len(s)
-}
-
-func (s Secrets) Swap(i, j int) {
-	s[i], s[j] = s[j], s[i]
-}
-
-func (s Secrets) Less(i, j int) bool {
-	return s[i].FilePath < s[j].FilePath
 }
 
 type LicenseFiles []LicenseFile
@@ -265,8 +245,5 @@ type ImageConfigDetail struct {
 
 	// Misconfiguration holds misconfigurations in container image config
 	Misconfiguration *Misconfiguration `json:",omitempty"`
-
-	// Secret holds secrets in container image config
-	Secret *Secret `json:",omitempty"`
 }
 

@@ -49,12 +49,7 @@ type AnalyzerOptions struct {
 	DisabledAnalyzers    []Type
 	DetectionPriority    types.DetectionPriority
 	MisconfScannerOption misconf.ScannerOption
-	SecretScannerOption  SecretScannerOption
 	LicenseScannerOption LicenseScannerOption
-}
-
-type SecretScannerOption struct {
-	ConfigPath string
 }
 
 type LicenseScannerOption struct {
@@ -180,7 +175,6 @@ type AnalysisResult struct {
 	PackageInfos         []types.PackageInfo
 	Applications         []types.Application
 	Misconfigurations    []types.Misconfiguration
-	Secrets              []types.Secret
 	Licenses             []types.LicenseFile
 	SystemInstalledFiles []string // A list of files installed by OS package manager
 
@@ -200,7 +194,7 @@ func NewAnalysisResult() *AnalysisResult {
 
 func (r *AnalysisResult) isEmpty() bool {
 	return lo.IsEmpty(r.OS) && r.Repository == nil && len(r.PackageInfos) == 0 && len(r.Applications) == 0 &&
-		len(r.Misconfigurations) == 0 && len(r.Secrets) == 0 && len(r.Licenses) == 0 && len(r.SystemInstalledFiles) == 0 &&
+		len(r.Misconfigurations) == 0 && len(r.Licenses) == 0 && len(r.SystemInstalledFiles) == 0 &&
 		r.BuildInfo == nil && len(r.Digests) == 0
 }
 
@@ -233,19 +227,6 @@ func (r *AnalysisResult) Sort() {
 		}
 		return r.Misconfigurations[i].FilePath < r.Misconfigurations[j].FilePath
 	})
-
-	// Secrets
-	sort.Slice(r.Secrets, func(i, j int) bool {
-		return r.Secrets[i].FilePath < r.Secrets[j].FilePath
-	})
-	for _, sec := range r.Secrets {
-		sort.Slice(sec.Findings, func(i, j int) bool {
-			if sec.Findings[i].RuleID != sec.Findings[j].RuleID {
-				return sec.Findings[i].RuleID < sec.Findings[j].RuleID
-			}
-			return sec.Findings[i].StartLine < sec.Findings[j].StartLine
-		})
-	}
 
 	// License files
 	sort.Slice(r.Licenses, func(i, j int) bool {
@@ -290,7 +271,6 @@ func (r *AnalysisResult) Merge(newResult *AnalysisResult) {
 	}
 
 	r.Misconfigurations = append(r.Misconfigurations, newResult.Misconfigurations...)
-	r.Secrets = append(r.Secrets, newResult.Secrets...)
 	r.Licenses = append(r.Licenses, newResult.Licenses...)
 	r.SystemInstalledFiles = append(r.SystemInstalledFiles, newResult.SystemInstalledFiles...)
 

@@ -21,7 +21,6 @@ var (
 		ConfigName: "image.image-config-scanners",
 		Values: xstrings.ToStringSlice(types.Scanners{
 			types.MisconfigScanner,
-			types.SecretScanner,
 		}),
 		Usage:         "comma-separated list of what security issues to detect on container image configurations",
 		TelemetrySafe: true,

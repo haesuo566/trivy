@@ -120,8 +120,6 @@ const (
 	// ============
 	TypeApkCommand        Type = "apk-command"
 	TypeHistoryDockerfile Type = "history-dockerfile"
-	TypeImageConfigSecret Type = "image-config-secret"
-
 	// =================
 	// Structured Config
 	// =================
@@ -141,11 +139,6 @@ const (
 	// License
 	// ========
 	TypeLicenseFile Type = "license-file"
-
-	// ========
-	// Secrets
-	// ========
-	TypeSecret Type = "secret"
 
 	// =======
 	// Red Hat

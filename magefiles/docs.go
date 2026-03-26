@@ -193,7 +193,6 @@ func getAllFlags() []flag.FlagGroup {
 		flag.NewReportFlagGroup(),
 		flag.NewRepoFlagGroup(),
 		flag.NewScanFlagGroup(),
-		flag.NewSecretFlagGroup(),
 		flag.NewVulnerabilityFlagGroup(),
 	}
 

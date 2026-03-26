@@ -12,8 +12,7 @@ type FindingStatus string
 const (
 	FindingTypeVulnerability    FindingType = "vulnerability"
 	FindingTypeMisconfiguration FindingType = "misconfiguration"
-	FindingTypeSecret           FindingType = "secret"
-	FindingTypeLicense          FindingType = "license"
+	FindingTypeLicense FindingType = "license"
 
 	FindingStatusIgnored            FindingStatus = "ignored"             // Trivy
 	FindingStatusUnknown            FindingStatus = "unknown"             // Trivy
@@ -24,7 +23,7 @@ const (
 )
 
 // Finding represents one of the findings that Trivy can detect,
-// such as vulnerabilities, misconfigurations, secrets, and licenses.
+// such as vulnerabilities, misconfigurations, and licenses.
 type Finding interface {
 	FindingType() FindingType
 }
@@ -73,8 +72,6 @@ func (m *ModifiedFinding) UnmarshalJSON(data []byte) error {
 		m.Finding, err = unmarshalFinding[DetectedVulnerability](aux.Finding)
 	case FindingTypeMisconfiguration:
 		m.Finding, err = unmarshalFinding[DetectedMisconfiguration](aux.Finding)
-	case FindingTypeSecret:
-		m.Finding, err = unmarshalFinding[DetectedSecret](aux.Finding)
 	case FindingTypeLicense:
 		m.Finding, err = unmarshalFinding[DetectedLicense](aux.Finding)
 	default:

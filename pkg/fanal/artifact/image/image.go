@@ -398,11 +398,7 @@ func (a Artifact) inspect(ctx context.Context, missingImage string, layerKeys, b
 		layerKey string) (any, error) {
 		layer := layerKeyMap[layerKey]
 
-		// If it is a base layer, secret scanning should not be performed.
 		var disabledAnalyzers []analyzer.Type
-		if slices.Contains(baseDiffIDs, layer.DiffID) {
-			disabledAnalyzers = append(disabledAnalyzers, analyzer.TypeSecret)
-		}
 
 		layerInfo, err := a.inspectLayer(ctx, layer, disabledAnalyzers)
 		if err != nil {
@@ -521,7 +517,6 @@ func (a Artifact) inspectLayer(ctx context.Context, layer types.Layer, disabled 
 		PackageInfos:      result.PackageInfos,
 		Applications:      result.Applications,
 		Misconfigurations: result.Misconfigurations,
-		Secrets:           result.Secrets,
 		Licenses:          result.Licenses,
 
 		// For Red Hat
@@ -594,7 +589,6 @@ func (a Artifact) inspectConfig(ctx context.Context, imageID string, osFound typ
 		DockerVersion:    config.DockerVersion,
 		OS:               config.OS,
 		Misconfiguration: result.Misconfiguration,
-		Secret:           result.Secret,
 		HistoryPackages:  result.HistoryPackages,
 	}
 

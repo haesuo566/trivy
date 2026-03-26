@@ -21,7 +21,7 @@ import (
 	_ "github.com/aquasecurity/trivy/pkg/fanal/analyzer/language/python/pip"
 	_ "github.com/aquasecurity/trivy/pkg/fanal/analyzer/os/alpine"
 	_ "github.com/aquasecurity/trivy/pkg/fanal/analyzer/pkg/apk"
-	_ "github.com/aquasecurity/trivy/pkg/fanal/analyzer/secret"
+
 	_ "github.com/aquasecurity/trivy/pkg/fanal/handler/sysfile"
 )
 
@@ -2570,7 +2570,7 @@ func TestArtifact_AnalysisStrategy(t *testing.T) {
 	}{
 		{
 			name:              "static paths",
-			disabledAnalyzers: append(analyzer.TypeConfigFiles, analyzer.TypePip, analyzer.TypeSecret),
+			disabledAnalyzers: append(analyzer.TypeConfigFiles, analyzer.TypePip),
 			wantRoots: []string{
 				"testdata/alpine/etc/alpine-release",
 				"testdata/alpine/lib/apk/db/installed",

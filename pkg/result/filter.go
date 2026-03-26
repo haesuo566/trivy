@@ -52,7 +52,6 @@ func FilterResult(ctx context.Context, result *types.Result, ignoreConf IgnoreCo
 	severities := xslices.Map(opt.Severities, dbTypes.Severity.String)
 
 	filterMisconfigurations(result, severities, opt.IncludeNonFailures, ignoreConf)
-	filterSecrets(result, severities, ignoreConf)
 	filterLicenses(result, severities, opt.IgnoreLicenses, ignoreConf)
 
 	if opt.PolicyFile != "" {
@@ -102,23 +101,6 @@ func filterMisconfigurations(result *types.Result, severities []string, includeN
 		result.Misconfigurations = nil
 		result.MisconfSummary = nil
 	}
-}
-
-func filterSecrets(result *types.Result, severities []string, ignoreConfig IgnoreConfig) {
-	var filtered []types.DetectedSecret
-	for _, secret := range result.Secrets {
-		if !slices.Contains(severities, secret.Severity) {
-			// Filter by severity
-			continue
-		} else if f := ignoreConfig.MatchSecret(secret.RuleID, result.Target); f != nil {
-			// Filter by ignore file
-			result.ModifiedFindings = append(result.ModifiedFindings,
-				types.NewModifiedFinding(secret, types.FindingStatusIgnored, f.Statement, ignoreConfig.FilePath))
-			continue
-		}
-		filtered = append(filtered, secret)
-	}
-	result.Secrets = filtered
 }
 
 func filterLicenses(result *types.Result, severities, ignoreLicenseNames []string, ignoreConfig IgnoreConfig) {
@@ -210,14 +192,6 @@ func applyPolicy(ctx context.Context, result *types.Result, policyFile string) e
 
 	result.Misconfigurations = filteredMisconfs
 	result.ModifiedFindings = append(result.ModifiedFindings, modifiedMisconfs...)
-
-	// Secrets
-	filteredSecrets, modifiedSecrets, err := filterFindingsByRego(ctx, query, result.Secrets, policyFile)
-	if err != nil {
-		return err
-	}
-	result.Secrets = filteredSecrets
-	result.ModifiedFindings = append(result.ModifiedFindings, modifiedSecrets...)
 
 	// Licenses
 	filteredLicenses, modifiedLicenses, err := filterFindingsByRego(ctx, query, result.Licenses, policyFile)

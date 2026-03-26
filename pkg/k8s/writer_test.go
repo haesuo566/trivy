@@ -73,25 +73,6 @@ var (
 			},
 		},
 	}
-	deployLuaWithSecrets = report.Resource{
-		Namespace: "default",
-		Kind:      "Deploy",
-		Name:      "lua",
-		Results: types.Results{
-			{
-				Secrets: []types.DetectedSecret{
-					{
-						RuleID:   "secret1",
-						Severity: "CRITICAL",
-					},
-					{
-						RuleID:   "secret2",
-						Severity: "MEDIUM",
-					},
-				},
-			},
-		},
-	}
 	deployOrionWithMisconfigs = report.Resource{
 		Namespace: "default",
 		Kind:      "Deploy",
@@ -434,37 +415,6 @@ RBAC Assessment
 Severities: C=CRITICAL H=HIGH M=MEDIUM L=LOW U=UNKNOWN`,
 		},
 		{
-			name: "Only secret, all severities",
-			report: report.Report{
-				ClusterName: "test",
-				Resources:   []report.Resource{deployLuaWithSecrets},
-			},
-			scanners:   types.Scanners{types.SecretScanner},
-			severities: allSeverities,
-			reportType: report.SummaryReport,
-			expectedOutput: `Summary Report for test
-=======================
-
-Workload Assessment
-┌───────────┬────────────┬───────────────────┐
-│ Namespace │  Resource  │      Secrets      │
-│           │            ├───┬───┬───┬───┬───┤
-│           │            │ C │ H │ M │ L │ U │
-├───────────┼────────────┼───┼───┼───┼───┼───┤
-│ default   │ Deploy/lua │ 1 │   │ 1 │   │   │
-└───────────┴────────────┴───┴───┴───┴───┴───┘
-Severities: C=CRITICAL H=HIGH M=MEDIUM L=LOW U=UNKNOWN
-
-
-Infra Assessment
-┌───────────┬──────────┬───────────────────┐
-│ Namespace │ Resource │      Secrets      │
-│           │          ├───┬───┬───┬───┬───┤
-│           │          │ C │ H │ M │ L │ U │
-└───────────┴──────────┴───┴───┴───┴───┴───┘
-Severities: C=CRITICAL H=HIGH M=MEDIUM L=LOW U=UNKNOWN`,
-		},
-		{
 			name: "apiserver, only infra and severities",
 			report: report.Report{
 				ClusterName: "test",
@@ -493,41 +443,6 @@ Infra Assessment
 ├─────────────┼────────────────────┼───┼───┼───┼───┼───┤
 │ kube-system │ Pod/kube-apiserver │   │ 1 │ 2 │ 2 │   │
 └─────────────┴────────────────────┴───┴───┴───┴───┴───┘
-Severities: C=CRITICAL H=HIGH M=MEDIUM L=LOW U=UNKNOWN`,
-		},
-		{
-			name: "apiserver, vuln,config,secret and severities",
-			report: report.Report{
-				ClusterName: "test",
-				Resources:   []report.Resource{apiseverPodWithMisconfigAndInfra},
-			},
-			scanners: types.Scanners{
-				types.VulnerabilityScanner,
-				types.MisconfigScanner,
-				types.SecretScanner,
-			},
-			severities: allSeverities,
-			reportType: report.SummaryReport,
-			expectedOutput: `Summary Report for test
-=======================
-
-Workload Assessment
-┌───────────┬──────────┬───────────────────┬───────────────────┬───────────────────┐
-│ Namespace │ Resource │  Vulnerabilities  │ Misconfigurations │      Secrets      │
-│           │          ├───┬───┬───┬───┬───┼───┬───┬───┬───┬───┼───┬───┬───┬───┬───┤
-│           │          │ C │ H │ M │ L │ U │ C │ H │ M │ L │ U │ C │ H │ M │ L │ U │
-└───────────┴──────────┴───┴───┴───┴───┴───┴───┴───┴───┴───┴───┴───┴───┴───┴───┴───┘
-Severities: C=CRITICAL H=HIGH M=MEDIUM L=LOW U=UNKNOWN
-
-
-Infra Assessment
-┌─────────────┬────────────────────┬───────────────────┬───────────────────┬───────────────────┐
-│  Namespace  │      Resource      │  Vulnerabilities  │ Misconfigurations │      Secrets      │
-│             │                    ├───┬───┬───┬───┬───┼───┬───┬───┬───┬───┼───┬───┬───┬───┬───┤
-│             │                    │ C │ H │ M │ L │ U │ C │ H │ M │ L │ U │ C │ H │ M │ L │ U │
-├─────────────┼────────────────────┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┤
-│ kube-system │ Pod/kube-apiserver │   │   │   │   │   │   │ 1 │ 2 │ 2 │   │   │   │   │   │   │
-└─────────────┴────────────────────┴───┴───┴───┴───┴───┴───┴───┴───┴───┴───┴───┴───┴───┴───┴───┘
 Severities: C=CRITICAL H=HIGH M=MEDIUM L=LOW U=UNKNOWN`,
 		},
 		{

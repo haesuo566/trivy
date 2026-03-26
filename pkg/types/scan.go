@@ -40,9 +40,6 @@ const (
 	// MisconfigScanner is the scanner of misconfigurations
 	MisconfigScanner Scanner = "misconfig"
 
-	// SecretScanner is the scanner of secrets
-	SecretScanner Scanner = "secret"
-
 	// RBACScanner is the scanner of rbac assessment
 	RBACScanner Scanner = "rbac"
 
@@ -60,7 +57,6 @@ var (
 		VulnerabilityScanner,
 		MisconfigScanner,
 		RBACScanner,
-		SecretScanner,
 		LicenseScanner,
 		NoneScanner,
 	}
@@ -70,7 +66,6 @@ var (
 	// Trivy is also able to detect security issues on the image config.
 	AllImageConfigScanners = Scanners{
 		MisconfigScanner,
-		SecretScanner,
 		NoneScanner,
 	}
 )
@@ -98,7 +93,6 @@ type ScanTarget struct {
 	Packages          types.Packages
 	Applications      []types.Application
 	Misconfigurations []types.Misconfiguration
-	Secrets           []types.Secret
 	Licenses          []types.LicenseFile
 }
 

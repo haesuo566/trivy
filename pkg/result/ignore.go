@@ -24,7 +24,7 @@ import (
 
 // IgnoreFinding represents an item to be ignored.
 type IgnoreFinding struct {
-	// ID is the identifier of the vulnerability, misconfiguration, secret, or license.
+	// ID is the identifier of the vulnerability, misconfiguration, or license.
 	// e.g. CVE-2019-8331, AVD-AWS-0175, etc.
 	// required: true
 	ID string `yaml:"id"`
@@ -145,7 +145,6 @@ type IgnoreConfig struct {
 	FilePath          string
 	Vulnerabilities   IgnoreFindings `yaml:"vulnerabilities"`
 	Misconfigurations IgnoreFindings `yaml:"misconfigurations"`
-	Secrets           IgnoreFindings `yaml:"secrets"`
 	Licenses          IgnoreFindings `yaml:"licenses"`
 }
 
@@ -169,10 +168,6 @@ func (c *IgnoreConfig) MatchMisconfiguration(ids []string, filePath string) *Ign
 		}
 	}
 	return nil
-}
-
-func (c *IgnoreConfig) MatchSecret(secretID, filePath string) *IgnoreFinding {
-	return c.Secrets.Match(secretID, filePath, nil)
 }
 
 func (c *IgnoreConfig) MatchLicense(licenseID, filePath string) *IgnoreFinding {
@@ -236,14 +231,12 @@ func ParseIgnoreFile(ctx context.Context, ignoreFile string) (IgnoreConfig, erro
 		conf = IgnoreConfig{
 			Vulnerabilities:   ignoredFindings,
 			Misconfigurations: ignoredFindings,
-			Secrets:           ignoredFindings,
 			Licenses:          ignoredFindings,
 		}
 	}
 
 	conf.Vulnerabilities.Prune(ctx)
 	conf.Misconfigurations.Prune(ctx)
-	conf.Secrets.Prune(ctx)
 	conf.Licenses.Prune(ctx)
 	conf.FilePath = filepath.ToSlash(filepath.Clean(ignoreFile))
 

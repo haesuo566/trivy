@@ -75,7 +75,6 @@ const (
 	ClassOSPkg       ResultClass = "os-pkgs"      // For detected packages and vulnerabilities in OS packages
 	ClassLangPkg     ResultClass = "lang-pkgs"    // For detected packages and vulnerabilities in language-specific packages
 	ClassConfig      ResultClass = "config"       // For detected misconfigurations
-	ClassSecret      ResultClass = "secret"       // For detected secrets
 	ClassLicense     ResultClass = "license"      // For detected package licenses
 	ClassLicenseFile ResultClass = "license-file" // For detected licenses in files
 	ComplianceK8sNsa10           = Compliance("k8s-nsa-1.0")
@@ -135,7 +134,6 @@ type Result struct {
 	Vulnerabilities   []DetectedVulnerability    `json:"Vulnerabilities,omitempty"`
 	MisconfSummary    *MisconfSummary            `json:"MisconfSummary,omitempty"`
 	Misconfigurations []DetectedMisconfiguration `json:"Misconfigurations,omitempty"`
-	Secrets           []DetectedSecret           `json:"Secrets,omitempty"`
 	Licenses          []DetectedLicense          `json:"Licenses,omitempty"`
 
 	// ModifiedFindings holds a list of findings that have been modified from their original state.
@@ -146,7 +144,7 @@ type Result struct {
 
 func (r *Result) IsEmpty() bool {
 	return len(r.Packages) == 0 && len(r.Vulnerabilities) == 0 && len(r.Misconfigurations) == 0 &&
-		len(r.Secrets) == 0 && len(r.Licenses) == 0 && len(r.ModifiedFindings) == 0
+		len(r.Licenses) == 0 && len(r.ModifiedFindings) == 0
 }
 
 type MisconfSummary struct {
@@ -158,7 +156,7 @@ func (s MisconfSummary) Empty() bool {
 	return s.Successes == 0 && s.Failures == 0
 }
 
-// Failed returns whether the result includes any vulnerabilities, misconfigurations or secrets
+// Failed returns whether the result includes any vulnerabilities, misconfigurations or licenses
 func (results Results) Failed() bool {
 	for _, r := range results {
 		if len(r.Vulnerabilities) > 0 {
@@ -168,9 +166,6 @@ func (results Results) Failed() bool {
 			if m.Status == MisconfStatusFailure {
 				return true
 			}
-		}
-		if len(r.Secrets) > 0 {
-			return true
 		}
 		if len(r.Licenses) > 0 {
 			return true

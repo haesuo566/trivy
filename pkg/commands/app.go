@@ -217,7 +217,7 @@ func NewImageCommand(globalFlags *flag.GlobalFlagGroup) *cobra.Command {
 		flag.NewRegoFlagGroup(),
 		reportFlagGroup,
 		flag.NewScanFlagGroup(),
-		flag.NewSecretFlagGroup(),
+
 	}
 
 	cmd := &cobra.Command{
@@ -296,7 +296,7 @@ func NewFilesystemCommand(globalFlags *flag.GlobalFlagGroup) *cobra.Command {
 		flag.NewRegoFlagGroup(),
 		reportFlagGroup,
 		flag.NewScanFlagGroup(),
-		flag.NewSecretFlagGroup(),
+
 	}
 
 	cmd := &cobra.Command{
@@ -359,7 +359,7 @@ func NewRootfsCommand(globalFlags *flag.GlobalFlagGroup) *cobra.Command {
 		flag.NewRegoFlagGroup(),
 		reportFlagGroup,
 		flag.NewScanFlagGroup(),
-		flag.NewSecretFlagGroup(),
+
 	}
 
 	cmd := &cobra.Command{
@@ -420,7 +420,7 @@ func NewRepositoryCommand(globalFlags *flag.GlobalFlagGroup) *cobra.Command {
 		flag.NewRegoFlagGroup(),
 		reportFlagGroup,
 		scanFlagGroup,
-		flag.NewSecretFlagGroup(),
+
 		flag.NewRepoFlagGroup(),
 	}
 
@@ -588,7 +588,6 @@ func NewKubernetesCommand(globalFlags *flag.GlobalFlagGroup) *cobra.Command {
 	scanners.Values = xstrings.ToStringSlice(types.Scanners{
 		types.VulnerabilityScanner,
 		types.MisconfigScanner,
-		types.SecretScanner,
 		types.RBACScanner,
 	})
 	scanners.Default = scanners.Values
@@ -633,7 +632,7 @@ func NewKubernetesCommand(globalFlags *flag.GlobalFlagGroup) *cobra.Command {
 		flag.NewRegoFlagGroup(),
 		reportFlagGroup,
 		scanFlags,
-		flag.NewSecretFlagGroup(),
+
 		flag.NewRegistryFlagGroup(),
 	}
 
@@ -700,7 +699,7 @@ func NewVMCommand(globalFlags *flag.GlobalFlagGroup) *cobra.Command {
 		packageFlagGroup,
 		reportFlagGroup,
 		flag.NewScanFlagGroup(),
-		flag.NewSecretFlagGroup(),
+
 		&flag.AWSFlagGroup{
 			Region: &flag.Flag[string]{
 				Name:       "aws-region",

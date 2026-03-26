@@ -48,13 +48,8 @@ func CalcKey(id string, artifactVersion int, analyzerVersions analyzer.Versions,
 		return "", xerrors.Errorf("json encode error: %w", err)
 	}
 
-	// Write check, data contents and secret config file
+	// Write check and data contents
 	paths := append(artifactOpt.MisconfScannerOption.PolicyPaths, artifactOpt.MisconfScannerOption.DataPaths...)
-
-	// Check if the secret config exists.
-	if _, err := os.Stat(artifactOpt.SecretScannerOption.ConfigPath); err == nil {
-		paths = append(paths, artifactOpt.SecretScannerOption.ConfigPath)
-	}
 
 	for _, p := range paths {
 		hash, err := hashContents(p)

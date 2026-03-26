@@ -10,10 +10,8 @@ import (
 // We might be going to rewrite these functions in Rego,
 // but we'll keep them for now until we need flexibility.
 var customIDs = map[string]func(types.Result) types.Result{
-	"VULN-CRITICAL":   filterCriticalVulns,
-	"VULN-HIGH":       filterHighVulns,
-	"SECRET-CRITICAL": filterCriticalSecrets,
-	"SECRET-HIGH":     filterHighSecrets,
+	"VULN-CRITICAL": filterCriticalVulns,
+	"VULN-HIGH":     filterHighVulns,
 }
 
 func mapCustomIDsToFilteredResults(result types.Result, checkIDs map[types.Scanner][]string,
@@ -53,22 +51,3 @@ func filterVulns(result types.Result, severity dbTypes.Severity) types.Result {
 	}
 }
 
-func filterCriticalSecrets(result types.Result) types.Result {
-	return filterSecrets(result, dbTypes.SeverityCritical)
-}
-
-func filterHighSecrets(result types.Result) types.Result {
-	return filterSecrets(result, dbTypes.SeverityHigh)
-}
-
-func filterSecrets(result types.Result, severity dbTypes.Severity) types.Result {
-	filtered := lo.Filter(result.Secrets, func(secret types.DetectedSecret, _ int) bool {
-		return secret.Severity == severity.String()
-	})
-	return types.Result{
-		Target:  result.Target,
-		Class:   result.Class,
-		Type:    result.Type,
-		Secrets: filtered,
-	}
-}

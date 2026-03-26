@@ -88,7 +88,7 @@ func (r Report) consolidate() ConsolidatedReport {
 	index := make(map[string]Resource)
 	var vulnerabilities []Resource
 	for _, m := range r.Resources {
-		if vulnerabilitiesOrSecretResource(m) {
+		if vulnerabilityResource(m) {
 			vulnerabilities = append(vulnerabilities, m)
 		}
 		if misconfigsResource(m) {
@@ -147,7 +147,7 @@ func SeparateMisconfigReports(k8sReport Report, scanners types.Scanners) []repor
 	var workloadMisconfig, infraMisconfig, rbacAssessment, workloadVulnerabilities, infraVulnerabilities, workloadResource []Resource
 	for _, resource := range k8sReport.Resources {
 		switch {
-		case vulnerabilitiesOrSecretResource(resource) && !infraResource(resource):
+		case vulnerabilityResource(resource) && !infraResource(resource):
 			if resource.Namespace == infraNamespace || nodeInfoResource(resource) {
 				infraVulnerabilities = append(infraVulnerabilities, nodeKind(resource))
 			} else {
@@ -275,13 +275,12 @@ func (r Report) PrintErrors() {
 func shouldAddToReport(scanners types.Scanners) bool {
 	return scanners.AnyEnabled(
 		types.MisconfigScanner,
-		types.VulnerabilityScanner,
-		types.SecretScanner)
+		types.VulnerabilityScanner)
 }
 
-func vulnerabilitiesOrSecretResource(resource Resource) bool {
+func vulnerabilityResource(resource Resource) bool {
 	for _, result := range resource.Results {
-		if len(result.Vulnerabilities) > 0 || len(resource.Results[0].Secrets) > 0 {
+		if len(result.Vulnerabilities) > 0 {
 			return true
 		}
 	}

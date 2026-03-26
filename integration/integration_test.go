@@ -80,7 +80,6 @@ const (
 	goldenPhoton30                    = "testdata/photon-30.json.golden"
 	goldenPom                         = "testdata/pom.json.golden"
 	goldenRockyLinux8                 = "testdata/rockylinux-8.json.golden"
-	goldenSecrets          = "testdata/secrets.json.golden"
 	goldenSLMicroRancher54 = "testdata/sl-micro-rancher5.4.json.golden"
 	goldenTestRepo                    = "testdata/test-repo.json.golden"
 	goldenUBI7                        = "testdata/ubi-7.json.golden"

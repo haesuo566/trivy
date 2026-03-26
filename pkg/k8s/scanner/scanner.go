@@ -93,7 +93,7 @@ func (s *Scanner) Scan(ctx context.Context, artifactsData []*artifacts.Artifact)
 	}
 
 	// scan images from kubernetes cluster in parallel
-	if s.opts.Scanners.AnyEnabled(types.VulnerabilityScanner, types.SecretScanner) && !s.opts.SkipImages {
+	if s.opts.Scanners.AnyEnabled(types.VulnerabilityScanner) && !s.opts.SkipImages {
 		onItem := func(ctx context.Context, artifact *artifacts.Artifact) ([]report.Resource, error) {
 			opts := s.opts
 			opts.Credentials = make([]ftypes.Credential, len(s.opts.Credentials))

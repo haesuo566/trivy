@@ -14,7 +14,6 @@ import (
 	"github.com/fatih/color"
 	"github.com/google/go-containerregistry/pkg/v1/types"
 
-	"github.com/aquasecurity/trivy/pkg/fanal/secret"
 	"github.com/aquasecurity/trivy/pkg/fanal/utils"
 	"github.com/aquasecurity/trivy/pkg/log"
 )
@@ -98,14 +97,11 @@ var (
 		"oauth_token",
 	}
 
-	// Regex patterns for redaction
-	asteriskPattern = regexp.MustCompile(`\*+`)
 )
 
 type traceTransport struct {
-	inner         http.RoundTripper
-	writer        io.Writer
-	secretScanner secret.Scanner
+	inner  http.RoundTripper
+	writer io.Writer
 }
 
 // TraceOption is a functional option for traceTransport
@@ -121,9 +117,8 @@ func WithWriter(w io.Writer) TraceOption {
 // NewTraceTransport returns an http.RoundTripper that logs HTTP requests and responses
 func NewTraceTransport(inner http.RoundTripper, opts ...TraceOption) http.RoundTripper {
 	tt := &traceTransport{
-		inner:         inner,
-		writer:        os.Stderr,              // default
-		secretScanner: secret.NewScanner(nil), // Use built-in rules
+		inner:  inner,
+		writer: os.Stderr, // default
 	}
 
 	for _, opt := range opts {
@@ -295,29 +290,7 @@ func (tt *traceTransport) redactBody(body []byte, contentType string) []byte {
 	// Start with the original content
 	redacted := string(body)
 
-	// First, use Trivy's secret scanner for detection
-	scanResult := tt.secretScanner.Scan(secret.ScanArgs{
-		FilePath: "http-body.txt",
-		Content:  bytes.NewReader(body),
-		Binary:   false,
-	})
-
-	// If scanner found secrets, redact them
-	if len(scanResult.Findings) > 0 {
-		lines := strings.Split(redacted, "\n")
-		for _, finding := range scanResult.Findings {
-			for _, line := range finding.Code.Lines {
-				if line.IsCause && line.Number > 0 && line.Number <= len(lines) {
-					// Replace one or more * with <redacted> using regex
-					redactedLine := asteriskPattern.ReplaceAllString(line.Content, redactedColor(redactedText))
-					lines[line.Number-1] = redactedLine
-				}
-			}
-		}
-		redacted = strings.Join(lines, "\n")
-	}
-
-	// Apply additional pattern-based redactions
+	// Apply pattern-based redactions
 	coloredRedactedText := redactedColor(redactedText)
 
 	// Handle JSON patterns

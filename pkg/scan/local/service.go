@@ -24,7 +24,6 @@ import (
 	"github.com/aquasecurity/trivy/pkg/scan/ospkg"
 	"github.com/aquasecurity/trivy/pkg/set"
 	"github.com/aquasecurity/trivy/pkg/types"
-	xslices "github.com/aquasecurity/trivy/pkg/x/slices"
 
 	_ "github.com/aquasecurity/trivy/pkg/fanal/analyzer/all"
 	_ "github.com/aquasecurity/trivy/pkg/fanal/handler/all"
@@ -93,7 +92,6 @@ func (s Service) Scan(ctx context.Context, targetName, artifactKey string, blobK
 		Packages:          mergePkgs(detail.Packages, detail.ImageConfig.Packages, options),
 		Applications:      detail.Applications,
 		Misconfigurations: mergeMisconfigurations(targetName, detail),
-		Secrets:           mergeSecrets(targetName, detail),
 		Licenses:          detail.Licenses,
 	}
 
@@ -124,9 +122,6 @@ func (s Service) ScanTarget(ctx context.Context, target types.ScanTarget, option
 
 	// Store misconfigurations
 	results = append(results, s.misconfsToResults(target.Misconfigurations, options)...)
-
-	// Store secrets
-	results = append(results, s.secretsToResults(target.Secrets, options)...)
 
 	// Scan licenses
 	results = append(results, s.scanLicenses(target, options)...)
@@ -207,26 +202,6 @@ func (s Service) MisconfsToResults(misconfs []ftypes.Misconfiguration) types.Res
 		return results[i].Target < results[j].Target
 	})
 
-	return results
-}
-
-func (s Service) secretsToResults(secrets []ftypes.Secret, options types.ScanOptions) types.Results {
-	if !options.Scanners.Enabled(types.SecretScanner) {
-		return nil
-	}
-
-	var results types.Results
-	for _, secret := range secrets {
-		log.Debug("Secret file", log.FilePath(secret.FilePath))
-
-		results = append(results, types.Result{
-			Target: secret.FilePath,
-			Class:  types.ClassSecret,
-			Secrets: xslices.Map(secret.Findings, func(secret ftypes.SecretFinding) types.DetectedSecret {
-				return types.DetectedSecret(secret)
-			}),
-		})
-	}
 	return results
 }
 
@@ -508,16 +483,4 @@ func mergeMisconfigurations(targetName string, detail ftypes.ArtifactDetail) []f
 	misconf := detail.ImageConfig.Misconfiguration
 	misconf.FilePath = targetName // Set the target name to the file path as container image config is not a real file.
 	return append(detail.Misconfigurations, *misconf)
-}
-
-// mergeSecrets merges secrets on container image config.
-func mergeSecrets(targetName string, detail ftypes.ArtifactDetail) []ftypes.Secret {
-	if detail.ImageConfig.Secret == nil {
-		return detail.Secrets
-	}
-
-	// Append secrets on container image config
-	secret := detail.ImageConfig.Secret
-	secret.FilePath = targetName // Set the target name to the file path as container image config is not a real file.
-	return append(detail.Secrets, *secret)
 }

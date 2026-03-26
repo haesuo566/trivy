@@ -23,7 +23,6 @@ type repoTestArgs struct {
 	namespaces                 []string
 	listAllPkgs                bool
 	input                      string
-	secretConfig               string
 	filePatterns               []string
 	helmSet                    []string
 	helmValuesFile             []string
@@ -452,15 +451,6 @@ func TestRepository(t *testing.T) {
 			golden: goldenTerraformOpenTofuRegistry,
 		},
 		{
-			name: "secrets",
-			args: repoTestArgs{
-				scanner:      "vuln,secret",
-				input:        "testdata/fixtures/repo/secrets",
-				secretConfig: "testdata/fixtures/repo/secrets/trivy-secret.yaml",
-			},
-			golden: goldenSecrets,
-		},
-		{
 			name: "conda generating CycloneDX SBOM",
 			args: repoTestArgs{
 				command: "rootfs",
@@ -681,9 +671,6 @@ func buildArgs(t *testing.T, cacheDir, command string, format types.Format, test
 	}
 	if testArgs.includeDevDeps {
 		osArgs = append(osArgs, "--include-dev-deps")
-	}
-	if testArgs.secretConfig != "" {
-		osArgs = append(osArgs, "--secret-config", testArgs.secretConfig)
 	}
 	if testArgs.vex != "" {
 		osArgs = append(osArgs, "--vex", testArgs.vex)

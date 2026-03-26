@@ -44,7 +44,6 @@ func (a *applier) ApplyLayers(ctx context.Context, imageID string, layerKeys []s
 	mergedLayer.ImageConfig = ftypes.ImageConfigDetail{
 		Packages:         imageInfo.HistoryPackages,
 		Misconfiguration: imageInfo.Misconfiguration,
-		Secret:           imageInfo.Secret,
 	}
 
 	// Fill layers info

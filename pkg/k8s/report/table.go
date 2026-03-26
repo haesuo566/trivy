@@ -24,15 +24,13 @@ const (
 	ResourceColumn          = "Resource"
 	VulnerabilitiesColumn   = "Vulnerabilities"
 	MisconfigurationsColumn = "Misconfigurations"
-	SecretsColumn           = "Secrets"
-	RbacAssessmentColumn    = "RBAC Assessment"
+	RbacAssessmentColumn = "RBAC Assessment"
 )
 
 func WorkloadColumns() []string {
 	return []string{
 		VulnerabilitiesColumn,
 		MisconfigurationsColumn,
-		SecretsColumn,
 	}
 }
 
@@ -44,7 +42,6 @@ func InfraColumns() []string {
 	return []string{
 		VulnerabilitiesColumn,
 		MisconfigurationsColumn,
-		SecretsColumn,
 	}
 }
 

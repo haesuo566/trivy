@@ -415,7 +415,6 @@ type Options struct {
 	RepoOptions
 	ReportOptions
 	ScanOptions
-	SecretOptions
 
 	// Trivy's version, not populated via CLI flags
 	AppVersion string
@@ -468,7 +467,6 @@ func (o *Options) Align(f *Flags) error {
 			o.Scanners = types.Scanners{types.VulnerabilityScanner}
 			o.ImageConfigScanners = types.Scanners{
 				types.MisconfigScanner,
-				types.SecretScanner,
 			}
 		}
 	}
@@ -719,7 +717,6 @@ func HiddenFlags() []string {
 		NewReportFlagGroup(),
 		NewRepoFlagGroup(),
 		NewScanFlagGroup(),
-		NewSecretFlagGroup(),
 	}
 
 	var hiddenFlags []string

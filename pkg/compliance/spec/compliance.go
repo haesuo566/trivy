@@ -63,8 +63,6 @@ func scannerByCheckID(checkID string) types.Scanner {
 		return types.VulnerabilityScanner
 	case strings.HasPrefix(checkID, "vuln-"): // custom id for filtering vulnerabilities by severity
 		return types.VulnerabilityScanner
-	case strings.HasPrefix(checkID, "secret-"): // custom id for filtering secrets by severity
-		return types.SecretScanner
 		// check the "avd-" prefix for backward compatibility
 	case strings.HasPrefix(checkID, "avd-") || isMisconfCheck(checkID):
 		return types.MisconfigScanner

@@ -39,7 +39,6 @@ type ConfigAnalyzerOptions struct {
 	FilePatterns         []string
 	DisabledAnalyzers    []Type
 	MisconfScannerOption misconf.ScannerOption
-	SecretScannerOption  SecretScannerOption
 }
 
 type ConfigAnalysisInput struct {
@@ -49,7 +48,6 @@ type ConfigAnalysisInput struct {
 
 type ConfigAnalysisResult struct {
 	Misconfiguration *types.Misconfiguration
-	Secret           *types.Secret
 	HistoryPackages  types.Packages
 }
 
@@ -59,9 +57,6 @@ func (r *ConfigAnalysisResult) Merge(newResult *ConfigAnalysisResult) {
 	}
 	if newResult.Misconfiguration != nil {
 		r.Misconfiguration = newResult.Misconfiguration
-	}
-	if newResult.Secret != nil {
-		r.Secret = newResult.Secret
 	}
 	if newResult.HistoryPackages != nil {
 		r.HistoryPackages = newResult.HistoryPackages

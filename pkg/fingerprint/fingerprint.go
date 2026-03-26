@@ -20,7 +20,6 @@ func Fill(report *types.Report) {
 
 		// TODO: Future implementation
 		// fillMisconfigurations(artifactID, target, result.Misconfigurations)
-		// fillSecrets(artifactID, target, result.Secrets)
 		// fillLicenses(artifactID, target, result.Licenses)
 	}
 }

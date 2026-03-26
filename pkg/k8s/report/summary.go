@@ -40,15 +40,13 @@ func ColumnHeading(scanners types.Scanners, availableColumns []string) []string 
 		ResourceColumn,
 	}
 	securityOptions := make(map[string]any, 0)
-	// maintain column order (vuln,config,secret)
+	// maintain column order (vuln,config)
 	for _, check := range scanners {
 		switch check {
 		case types.VulnerabilityScanner:
 			securityOptions[VulnerabilitiesColumn] = nil
 		case types.MisconfigScanner:
 			securityOptions[MisconfigurationsColumn] = nil
-		case types.SecretScanner:
-			securityOptions[SecretsColumn] = nil
 		case types.RBACScanner:
 			securityOptions[RbacAssessmentColumn] = nil
 		}
@@ -89,7 +87,7 @@ func (s SummaryWriter) Write(report Report) error {
 		if !finding.Results.Failed() {
 			continue
 		}
-		vCount, mCount, sCount := accumulateSeverityCounts(finding)
+		vCount, mCount := accumulateSeverityCounts(finding)
 		name := fmt.Sprintf("%s/%s", finding.Kind, finding.Name)
 		rowParts := []string{
 			finding.Namespace,
@@ -103,10 +101,6 @@ func (s SummaryWriter) Write(report Report) error {
 		if slices.Contains(s.ColumnsHeading, MisconfigurationsColumn) ||
 			slices.Contains(s.ColumnsHeading, RbacAssessmentColumn) {
 			rowParts = append(rowParts, s.generateSummary(mCount)...)
-		}
-
-		if slices.Contains(s.ColumnsHeading, SecretsColumn) {
-			rowParts = append(rowParts, s.generateSummary(sCount)...)
 		}
 
 		t.AddRow(rowParts...)
@@ -160,10 +154,9 @@ func getRequiredSeverities(requiredSevs []dbTypes.Severity) ([]string, []string)
 	return severities, severityHeadings
 }
 
-func accumulateSeverityCounts(finding Resource) (map[string]int, map[string]int, map[string]int) {
+func accumulateSeverityCounts(finding Resource) (map[string]int, map[string]int) {
 	vCount := make(map[string]int)
 	mCount := make(map[string]int)
-	sCount := make(map[string]int)
 	for _, r := range finding.Results {
 		for _, rv := range r.Vulnerabilities {
 			vCount[rv.Severity]++
@@ -174,11 +167,8 @@ func accumulateSeverityCounts(finding Resource) (map[string]int, map[string]int,
 			}
 			mCount[rv.Severity]++
 		}
-		for _, rv := range r.Secrets {
-			sCount[rv.Severity]++
-		}
 	}
-	return vCount, mCount, sCount
+	return vCount, mCount
 }
 
 func configureHeader(s SummaryWriter, t *table.Table, columnHeading []string) {

@@ -433,26 +433,6 @@ var (
 		},
 	}
 
-	deployLuaWithSecrets = Resource{
-		Namespace: "default",
-		Kind:      "Deploy",
-		Name:      "lua",
-		Results: types.Results{
-			{
-				Secrets: []types.DetectedSecret{
-					{
-						RuleID:   "secret1",
-						Severity: "CRITICAL",
-					},
-					{
-						RuleID:   "secret2",
-						Severity: "MEDIUM",
-					},
-				},
-			},
-		},
-	}
-
 	apiseverPodWithMisconfigAndInfra = Resource{
 		Namespace: "kube-system",
 		Kind:      "Pod",
@@ -823,7 +803,6 @@ func Test_separateMisconfigReports(t *testing.T) {
 		},
 
 		// TODO: add vuln only
-		// TODO: add secret only
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

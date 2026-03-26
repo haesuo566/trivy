@@ -34,8 +34,6 @@ import (
 	"github.com/aquasecurity/trivy/pkg/result"
 	"github.com/aquasecurity/trivy/pkg/scan"
 	"github.com/aquasecurity/trivy/pkg/types"
-	"github.com/aquasecurity/trivy/pkg/version/doc"
-	xstrings "github.com/aquasecurity/trivy/pkg/x/strings"
 )
 
 // TargetKind represents what kind of artifact Trivy scans
@@ -339,11 +337,6 @@ func disabledAnalyzers(opts flag.Options) []analyzer.Type {
 		analyzers = append(analyzers, analyzer.TypeLanguages...)
 	}
 
-	// Do not perform secret scanning when it is not specified.
-	if !opts.Scanners.Enabled(types.SecretScanner) {
-		analyzers = append(analyzers, analyzer.TypeSecret)
-	}
-
 	// Do not perform misconfiguration scanning when it is not specified.
 	if !opts.Scanners.AnyEnabled(types.MisconfigScanner, types.RBACScanner) {
 		analyzers = append(analyzers, analyzer.TypeConfigFiles...)
@@ -435,21 +428,6 @@ func (r *runner) initScannerConfig(ctx context.Context, opts flag.Options) (Scan
 		}
 	}
 
-	// Do not load config file for secret scanning
-	if opts.Scanners.Enabled(types.SecretScanner) {
-		logger := log.WithPrefix(log.PrefixSecret)
-		logger.Info("Secret scanning is enabled")
-		if nonSecrets := lo.Without(opts.Scanners, types.SecretScanner, types.SBOMScanner); len(nonSecrets) > 0 {
-			logger.Info(fmt.Sprintf(
-				"If your scanning is slow, please try '--scanners %s' to disable secret scanning",
-				strings.Join(xstrings.ToStringSlice(nonSecrets), ",")))
-		}
-		// e.g. https://trivy.dev/docs/latest/scanner/secret/#recommendation
-		logger.Info(fmt.Sprintf("Please see %s for faster secret detection", doc.URL("guide/scanner/secret/", "recommendation")))
-	} else {
-		opts.SecretConfigPath = ""
-	}
-
 	if opts.Scanners.Enabled(types.LicenseScanner) {
 		logger := log.WithPrefix(log.PrefixLicense)
 		if opts.LicenseFull {
@@ -505,11 +483,6 @@ func (r *runner) initScannerConfig(ctx context.Context, opts flag.Options) (Scan
 
 			// For misconfiguration scanning
 			MisconfScannerOption: configScannerOptions,
-
-			// For secret scanning
-			SecretScannerOption: analyzer.SecretScannerOption{
-				ConfigPath: opts.SecretConfigPath,
-			},
 
 			// For license scanning
 			LicenseScannerOption: analyzer.LicenseScannerOption{

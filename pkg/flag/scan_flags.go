@@ -37,12 +37,10 @@ var (
 		ConfigName: "scan.scanners",
 		Default: xstrings.ToStringSlice(types.Scanners{
 			types.VulnerabilityScanner,
-			types.SecretScanner,
 		}),
 		Values: xstrings.ToStringSlice(types.Scanners{
 			types.VulnerabilityScanner,
 			types.MisconfigScanner,
-			types.SecretScanner,
 			types.LicenseScanner,
 		}),
 		ValueNormalize: func(ss []string) []string {

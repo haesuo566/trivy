@@ -98,7 +98,6 @@ func lookupOriginLayerForLib(filePath string, lib ftypes.Package, layers []ftype
 func ApplyLayers(layers []ftypes.BlobInfo) ftypes.ArtifactDetail {
 	sep := "/"
 	nestedMap := nested.Nested{}
-	secretsMap := make(map[string]ftypes.Secret)
 	var mergedLayer ftypes.ArtifactDetail
 
 	for _, layer := range layers {
@@ -138,16 +137,6 @@ func ApplyLayers(layers []ftypes.BlobInfo) ftypes.ArtifactDetail {
 			nestedMap.SetByString(key, sep, config)
 		}
 
-		// Apply secrets
-		for _, secret := range layer.Secrets {
-			l := ftypes.Layer{
-				Digest:    layer.Digest,
-				DiffID:    layer.DiffID,
-				CreatedBy: layer.CreatedBy,
-			}
-			secretsMap = mergeSecrets(secretsMap, secret, l)
-		}
-
 		// Apply license files
 		for _, license := range layer.Licenses {
 			license.Layer = ftypes.Layer{
@@ -174,10 +163,6 @@ func ApplyLayers(layers []ftypes.BlobInfo) ftypes.ArtifactDetail {
 		}
 		return nil
 	})
-
-	for _, s := range secretsMap {
-		mergedLayer.Secrets = append(mergedLayer.Secrets, s)
-	}
 
 	// Extract dpkg licenses
 	// The license information is not stored in the dpkg database and in a separate file,
@@ -305,38 +290,6 @@ func aggregate(detail *ftypes.ArtifactDetail) {
 
 	// Overwrite Applications
 	detail.Applications = apps
-}
-
-// We must save secrets from all layers even though they are removed in the uppler layer.
-// If the secret was changed at the top level, we need to overwrite it.
-func mergeSecrets(secretsMap map[string]ftypes.Secret, newSecret ftypes.Secret, layer ftypes.Layer) map[string]ftypes.Secret {
-	for i := range newSecret.Findings { // add layer to the Findings from the new secret
-		newSecret.Findings[i].Layer = layer
-	}
-
-	secret, ok := secretsMap[newSecret.FilePath]
-	if !ok {
-		// Add the new finding if its file doesn't exist before
-		secretsMap[newSecret.FilePath] = newSecret
-	} else {
-		// If the new finding has the same `RuleID` as the finding in the previous layers - use the new finding
-		for _, previousFinding := range secret.Findings { // secrets from previous layers
-			if !secretFindingsContains(newSecret.Findings, previousFinding) {
-				newSecret.Findings = append(newSecret.Findings, previousFinding)
-			}
-		}
-		secretsMap[newSecret.FilePath] = newSecret
-	}
-	return secretsMap
-}
-
-func secretFindingsContains(findings []ftypes.SecretFinding, finding ftypes.SecretFinding) bool {
-	for _, f := range findings {
-		if f.RuleID == finding.RuleID {
-			return true
-		}
-	}
-	return false
 }
 
 // purlMatchesOS checks if a package's PURL namespace matches the detected OS family.
