@@ -607,14 +607,6 @@
           "type": "string",
           "description": "[EXPERIMENTAL] specify a distribution, \u003cfamily\u003e/\u003cversion\u003e"
         },
-        "skip-version-check": {
-          "type": "boolean",
-          "description": "suppress notices about version updates and Trivy announcements"
-        },
-        "disable-telemetry": {
-          "type": "boolean",
-          "description": "disable sending anonymous usage data to Aqua"
-        }
       },
       "type": "object"
     },

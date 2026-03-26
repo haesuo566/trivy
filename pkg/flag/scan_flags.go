@@ -116,17 +116,6 @@ var (
 		Usage:         "[EXPERIMENTAL] specify a distribution, <family>/<version>",
 		TelemetrySafe: true,
 	}
-	SkipVersionCheckFlag = Flag[bool]{
-		Name:          "skip-version-check",
-		ConfigName:    "scan.skip-version-check",
-		Usage:         "suppress notices about version updates and Trivy announcements",
-		TelemetrySafe: true,
-	}
-	DisableTelemetryFlag = Flag[bool]{
-		Name:       "disable-telemetry",
-		ConfigName: "scan.disable-telemetry",
-		Usage:      "disable sending anonymous usage data to Aqua",
-	}
 )
 
 type ScanFlagGroup struct {
@@ -140,9 +129,7 @@ type ScanFlagGroup struct {
 	SBOMSources       *Flag[[]string]
 	RekorURL          *Flag[string]
 	DetectionPriority *Flag[string]
-	DistroFlag        *Flag[string]
-	SkipVersionCheck  *Flag[bool]
-	DisableTelemetry  *Flag[bool]
+	DistroFlag *Flag[string]
 }
 
 type ScanOptions struct {
@@ -156,9 +143,7 @@ type ScanOptions struct {
 	SBOMSources       []string
 	RekorURL          string
 	DetectionPriority ftypes.DetectionPriority
-	Distro            ftypes.OS
-	SkipVersionCheck  bool
-	DisableTelemetry  bool
+	Distro ftypes.OS
 }
 
 func NewScanFlagGroup() *ScanFlagGroup {
@@ -173,9 +158,7 @@ func NewScanFlagGroup() *ScanFlagGroup {
 		RekorURL:          RekorURLFlag.Clone(),
 		Slow:              SlowFlag.Clone(),
 		DetectionPriority: DetectionPriority.Clone(),
-		DistroFlag:        DistroFlag.Clone(),
-		SkipVersionCheck:  SkipVersionCheckFlag.Clone(),
-		DisableTelemetry:  DisableTelemetryFlag.Clone(),
+		DistroFlag: DistroFlag.Clone(),
 	}
 }
 
@@ -196,8 +179,6 @@ func (f *ScanFlagGroup) Flags() []Flagger {
 		f.RekorURL,
 		f.DetectionPriority,
 		f.DistroFlag,
-		f.SkipVersionCheck,
-		f.DisableTelemetry,
 	}
 }
 
@@ -236,9 +217,7 @@ func (f *ScanFlagGroup) ToOptions(opts *Options) error {
 		SBOMSources:       f.SBOMSources.Value(),
 		RekorURL:          f.RekorURL.Value(),
 		DetectionPriority: ftypes.DetectionPriority(f.DetectionPriority.Value()),
-		Distro:            distro,
-		SkipVersionCheck:  f.SkipVersionCheck.Value(),
-		DisableTelemetry:  f.DisableTelemetry.Value(),
+		Distro: distro,
 	}
 	return nil
 }
